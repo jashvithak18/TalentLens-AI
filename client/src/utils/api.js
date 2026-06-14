@@ -3,7 +3,7 @@ import { store } from '../redux/store';
 import { logout, setCredentials } from '../redux/authSlice';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: import.meta.env.VITE_API_URL || 'https://talentlens-ai-e57l.onrender.com/api',
 });
 
 // Request Interceptor: Inject JWT Token
@@ -33,7 +33,7 @@ api.interceptors.response.use(
         const refreshToken = localStorage.getItem('refreshToken');
         
         if (refreshToken) {
-          const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/refresh`, { refreshToken });
+          const res = await axios.post(`${import.meta.env.VITE_API_URL || 'https://talentlens-ai-e57l.onrender.com/api'}/auth/refresh`, { refreshToken });
           
           if (res.data.success) {
             // Update Redux state & localStorage
