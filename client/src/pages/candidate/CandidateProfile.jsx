@@ -136,24 +136,6 @@ const CandidateProfile = () => {
     }
   });
 
-  // Mutator for upload resume
-  const uploadResumeMutation = useMutation({
-    mutationFn: async (formData) => {
-      const res = await api.post('/candidates/resume', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      return res.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['candidateProfile'] });
-      queryClient.invalidateQueries({ queryKey: ['candidateDashboard'] });
-      showSuccess('Resume parsed and profile updated!');
-    },
-    onError: (err) => {
-      setErrorMsg(err.response?.data?.error || 'Failed to parse resume.');
-    }
-  });
-
   // Mutators for sub-sections
   const addSubSectionMutation = useMutation({
     mutationFn: async ({ type, payload }) => {
@@ -268,7 +250,11 @@ const CandidateProfile = () => {
       city: fd.get('city'),
       country: fd.get('country'),
       bio: fd.get('bio'),
-      skills: selectedSkills
+      skills: selectedSkills,
+      socialLinks: {
+        linkedin: fd.get('linkedin'),
+        github: fd.get('github')
+      }
     });
   };
 
@@ -278,15 +264,6 @@ const CandidateProfile = () => {
       const fd = new FormData();
       fd.append('avatar', file);
       uploadAvatarMutation.mutate(fd);
-    }
-  };
-
-  const handleResumeUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const fd = new FormData();
-      fd.append('resume', file);
-      uploadResumeMutation.mutate(fd);
     }
   };
 
@@ -408,7 +385,6 @@ const CandidateProfile = () => {
       <div className="flex space-x-2 border-b border-darkBorder pb-px">
         {[
           { id: 'general', label: 'General Info', icon: User },
-          { id: 'resume', label: 'Resume Parser', icon: FileText },
           { id: 'education', label: 'Education', icon: BookOpen },
           { id: 'experience', label: 'Experience', icon: Briefcase },
           { id: 'projects', label: 'Projects', icon: Award },
@@ -541,6 +517,29 @@ const CandidateProfile = () => {
               </div>
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700">LinkedIn URL</label>
+                <input
+                  type="url"
+                  name="linkedin"
+                  defaultValue={profile.socialLinks?.linkedin || ''}
+                  placeholder="https://linkedin.com/in/username"
+                  className="custom-input text-xs"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700">GitHub URL</label>
+                <input
+                  type="url"
+                  name="github"
+                  defaultValue={profile.socialLinks?.github || ''}
+                  placeholder="https://github.com/username"
+                  className="custom-input text-xs"
+                />
+              </div>
+            </div>
+
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-slate-700">Bio / Summary</label>
               <textarea
@@ -558,57 +557,51 @@ const CandidateProfile = () => {
               {/* Selected Skills Badges */}
               <div className="flex flex-wrap gap-1.5 mb-2">
                 {selectedSkills.map((skill, index) => (
-                  <div 
-                    key={index} 
-                    className="flex items-center bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs px-2.5 py-1 rounded-full space-x-1.5"
+                  <span
+                    key={index}
+                    className="flex items-center space-x-1 px-2.5 py-1 bg-indigo-50 border border-indigo-100 text-xs text-indigo-700 rounded-full font-bold shadow-sm"
                   >
                     <span>{skill}</span>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={() => handleRemoveSkill(skill)}
-                      className="text-indigo-500 hover:text-indigo-750 focus:outline-none font-bold text-[10px] cursor-pointer"
+                      className="text-indigo-400 hover:text-indigo-650 transition-colors ml-0.5"
                     >
-                      ✕
+                      &times;
                     </button>
-                  </div>
+                  </span>
                 ))}
-                {selectedSkills.length === 0 && (
-                  <span className="text-xs text-textMuted italic">No skills added yet.</span>
-                )}
               </div>
 
-              {/* Autocomplete Input */}
+              {/* Autocomplete Search Input */}
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="Type a skill (e.g. React, Python...)"
                   value={skillInput}
                   onChange={(e) => {
                     setSkillInput(e.target.value);
                     setShowDropdown(true);
                   }}
                   onFocus={() => setShowDropdown(true)}
-                  className="custom-input text-xs w-full"
+                  placeholder="Search and add skills (e.g. React, Docker...)"
+                  className="custom-input text-xs"
                 />
-                
-                {showDropdown && skillInput.trim() !== '' && (
-                  <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-48 overflow-y-auto">
-                    {filteredSkills.map((skill, index) => (
+                {showDropdown && (
+                  <div className="absolute z-15 w-full bg-white border border-[#E5E7EB] rounded-lg shadow-premium max-h-48 overflow-y-auto mt-1">
+                    {filteredSkills.map((skill, idx) => (
                       <button
-                        key={index}
+                        key={idx}
                         type="button"
                         onClick={() => handleAddSkill(skill)}
-                        className="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                        className="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-850 transition-colors font-semibold"
                       >
                         {skill}
                       </button>
                     ))}
-                    
-                    {/* Add Custom Skill Option */}
-                    {!allSkills.some(s => s.toLowerCase() === skillInput.trim().toLowerCase()) && (
+                    {filteredSkills.length === 0 && skillInput.trim() && (
                       <button
                         type="button"
-                        onClick={() => handleAddSkill(skillInput.trim())}
+                        onClick={() => handleStartEdit ? handleAddSkill(skillInput.trim()) : handleAddSkill(skillInput.trim())}
                         className="w-full text-left px-4 py-2 text-xs text-indigo-600 font-semibold hover:bg-indigo-50 hover:text-indigo-850 transition-colors border-t border-slate-100"
                       >
                         + Add "{skillInput.trim()}" as a new skill
@@ -623,51 +616,6 @@ const CandidateProfile = () => {
               {updateGeneralMutation.isPending ? 'Updating...' : 'Save General Info'}
             </button>
           </form>
-        )}
-
-        {activeTab === 'resume' && (
-          <div className="space-y-6 text-center py-6">
-            <div className="border-2 border-dashed border-darkBorder rounded-xl p-8 max-w-md mx-auto hover:border-brandPrimary transition-all cursor-pointer relative">
-              <input
-                type="file"
-                accept=".pdf,.docx,.doc"
-                onChange={handleResumeUpload}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              />
-              <Upload size={36} className="text-indigo-600 mx-auto mb-4" />
-              <p className="text-xs font-semibold text-slate-800">Upload PDF or DOCX resume</p>
-              <p className="text-[10px] text-textMuted mt-1">Our AI will automatically parse skills, projects, and work history.</p>
-            </div>
-
-            {uploadResumeMutation.isPending && (
-              <div className="space-y-2 max-w-sm mx-auto">
-                <div className="w-full bg-slate-200 h-1 rounded-full overflow-hidden">
-                  <div className="bg-indigo-600 h-1 rounded-full animate-pulse w-2/3" />
-                </div>
-                <p className="text-[10px] text-textMuted">Running semantic parser, hidden skill indexer...</p>
-              </div>
-            )}
-
-            {profile.resumeUrl && (
-              <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 flex items-center justify-between max-w-md mx-auto">
-                <div className="flex items-center space-x-3 text-left">
-                  <FileText className="text-indigo-600" size={20} />
-                  <div>
-                    <p className="text-xs font-semibold text-slate-800">Current Resume</p>
-                    <span className="text-[10px] text-textMuted">Parsing confidence: {profile.resumeParsingConfidence}%</span>
-                  </div>
-                </div>
-                <a
-                  href={getResumeUrl(profile.resumeUrl)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold"
-                >
-                  View File
-                </a>
-              </div>
-            )}
-          </div>
         )}
 
         {activeTab === 'experience' && (

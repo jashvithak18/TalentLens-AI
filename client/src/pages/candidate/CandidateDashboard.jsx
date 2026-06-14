@@ -1,8 +1,10 @@
 import React, { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import api from '../../utils/api';
 import LoadingScreen from '../../components/LoadingScreen';
+import { Sparkles, FileText, ArrowRight } from 'lucide-react';
 import {
   Radar,
   RadarChart,
@@ -73,6 +75,35 @@ const CandidateDashboard = () => {
         <div className="px-3.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 shrink-0 self-start md:self-center shadow-sm">
           Match Readiness: <span className="text-brandPrimary font-extrabold">{scores.potential.currentCapability}%</span>
         </div>
+      </div>
+
+      {/* Prominent AI Resume Parser CTA */}
+      <div className="bg-white border border-indigo-600/10 rounded-2xl p-5 shadow-premium flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden glow-card">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-600/5 rounded-full blur-2xl pointer-events-none" />
+        <div className="flex items-center space-x-4">
+          <div className="w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0 shadow-sm">
+            <Sparkles className="w-6 h-6 animate-pulse" />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-slate-900 font-jakarta flex items-center gap-1.5">
+              Build & Sync Profile in Seconds
+              <span className="bg-indigo-600 text-white text-[8px] px-1.5 py-0.5 rounded-full font-extrabold tracking-wider uppercase animate-pulse">AI Powered</span>
+            </h2>
+            <p className="text-xs text-slate-600 mt-1 leading-relaxed max-w-xl">
+              {profile.resumeUrl 
+                ? `Your profile is synced from your resume (${profile.resumeParsingConfidence}% parsing confidence). Re-upload to automatically update experience, education, projects, and skills.`
+                : 'Upload your PDF or Word resume. Our parser will instantly extract and auto-populate your experience history, education, projects, skills, and certifications.'
+              }
+            </p>
+          </div>
+        </div>
+        <Link 
+          to="/candidate/resume-parser" 
+          className="w-full md:w-auto btn-primary text-xs font-semibold py-2.5 px-5 flex items-center justify-center space-x-1.5 shrink-0"
+        >
+          <span>{profile.resumeUrl ? 'Manage Resume' : 'Launch Resume Parser'}</span>
+          <ArrowRight size={14} />
+        </Link>
       </div>
 
       {/* Primary KPI widgets */}

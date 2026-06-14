@@ -35,6 +35,7 @@ const Sidebar = () => {
 
   const candidateLinks = [
     { label: 'Dashboard', path: '/candidate/dashboard', icon: LayoutDashboard },
+    { label: 'Resume Parser', path: '/candidate/resume-parser', icon: FileText },
     { label: 'My Profile', path: '/candidate/profile', icon: User },
     { label: 'Search Jobs', path: '/candidate/jobs', icon: Briefcase },
     { label: 'Applications', path: '/candidate/applications', icon: FileText },

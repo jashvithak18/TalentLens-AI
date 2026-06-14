@@ -122,21 +122,37 @@ exports.uploadResume = async (req, res, next) => {
     profile.resumeUrl = uploadResult.url;
     profile.resumePublicId = uploadResult.public_id;
     profile.resumeText = resumeText;
-    profile.skills = [...new Set([...(profile.skills || []), ...(parsedData.skills || [])])];
+    // Merge skills
+    if (parsedData.skills && parsedData.skills.length > 0) {
+      profile.skills = [...new Set([...(profile.skills || []), ...(parsedData.skills || [])])];
+    }
     profile.resumeParsingConfidence = parsedData.confidence || 85;
 
-    // Populate experience, education, projects if empty
-    if (profile.experience.length === 0 && parsedData.experience) {
+    // Overwrite experience, education, projects, certifications automatically
+    if (parsedData.experience && parsedData.experience.length > 0) {
       profile.experience = parsedData.experience;
     }
-    if (profile.education.length === 0 && parsedData.education) {
+    if (parsedData.education && parsedData.education.length > 0) {
       profile.education = parsedData.education;
     }
-    if (profile.projects.length === 0 && parsedData.projects) {
+    if (parsedData.projects && parsedData.projects.length > 0) {
       profile.projects = parsedData.projects;
     }
+    if (parsedData.certifications && parsedData.certifications.length > 0) {
+      profile.certifications = parsedData.certifications;
+    }
+
+    // Populate other profile fields from resume
+    if (parsedData.title) profile.title = parsedData.title;
+    if (parsedData.location) profile.location = parsedData.location;
+    if (parsedData.bio) profile.bio = parsedData.bio;
 
     await profile.save();
+
+    // Overwrite/Add name in the User model if extracted
+    if (parsedData.name) {
+      await User.findByIdAndUpdate(req.user.id, { name: parsedData.name });
+    }
 
     // Trigger AI Inferred Skills detection
     const inferred = await aiDetectHiddenSkills(profile);

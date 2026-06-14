@@ -64,6 +64,8 @@ exports.aiParseResume = async (resumeText) => {
     name: "Alex Rivera",
     email: "alex.rivera@example.com",
     title: "Senior Full Stack Engineer",
+    location: "San Francisco, CA",
+    bio: "Passionate Full Stack Engineer with 5+ years of experience building high-performance web applications and cloud architectures.",
     skills: ["React", "Node.js", "Express.js", "MongoDB", "JavaScript", "TypeScript", "AWS", "Docker", "Tailwind CSS"],
     experience: [
       { company: "TechCorp Solutions", role: "Senior Software Engineer", startDate: "2023-01-01", current: true, description: "Led development of a high-traffic e-commerce microservice platform." },
@@ -92,6 +94,8 @@ exports.aiParseResume = async (resumeText) => {
       "name": "string",
       "email": "string",
       "title": "string",
+      "location": "string",
+      "bio": "string",
       "skills": ["string"],
       "experience": [{"company": "string", "role": "string", "startDate": "YYYY-MM-DD", "endDate": "YYYY-MM-DD or null", "current": boolean, "description": "string"}],
       "education": [{"institution": "string", "degree": "string", "fieldOfStudy": "string", "grade": "string"}],

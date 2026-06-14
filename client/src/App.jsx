@@ -18,6 +18,7 @@ import ResetPassword from './pages/ResetPassword';
 // Candidate Pages
 import CandidateDashboard from './pages/candidate/CandidateDashboard';
 import CandidateProfile from './pages/candidate/CandidateProfile';
+import ResumeParser from './pages/candidate/ResumeParser';
 import JobSearch from './pages/candidate/JobSearch';
 import Assessments from './pages/candidate/Assessments';
 import LiveAssessment from './pages/candidate/LiveAssessment';
@@ -82,6 +83,14 @@ const App = () => {
                 element={
                   <ProtectedRoute allowedRoles={['candidate']}>
                     <CandidateProfile />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/candidate/resume-parser"
+                element={
+                  <ProtectedRoute allowedRoles={['candidate']}>
+                    <ResumeParser />
                   </ProtectedRoute>
                 }
               />
