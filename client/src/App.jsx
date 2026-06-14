@@ -8,7 +8,7 @@ import Sidebar from './components/Sidebar';
 import BottomNavigation from './components/BottomNavigation';
 
 // Public/Auth Pages
-import Landing from './pages/Landing';
+import About from './pages/About';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
@@ -56,8 +56,8 @@ const App = () => {
           {token && <Navbar />}
           <main className={`flex-1 ${token ? 'p-6 overflow-y-auto' : ''}`}>
             <Routes>
-              {/* Landing Page as permanent Home Page */}
-              <Route path="/" element={<Landing />} />
+              {/* About Page as permanent Home Page */}
+              <Route path="/" element={<About />} />
 
               {/* Auth Routes */}
               <Route path="/login" element={!token ? <Login /> : <Navigate to="/" />} />

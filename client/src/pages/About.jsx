@@ -123,7 +123,7 @@ const LandingRadarChart = ({ problemSolving = 85, communication = 70, leadership
   );
 };
 
-export const Landing = () => {
+export const About = () => {
   const navigate = useNavigate();
   const { token, user } = useSelector((state) => state.auth);
   const [pipelineStep, setPipelineStep] = useState(0);
@@ -168,7 +168,7 @@ export const Landing = () => {
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Logo iconSize="h-8 w-8" textSize="text-xl" />
           <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
-            <a href="#problem" className="hover:text-brandPrimary transition-colors">The Solution</a>
+            <Link to="/" className="hover:text-brandPrimary transition-colors">About</Link>
           </nav>
           <div className="flex items-center gap-4">
             {token ? (
@@ -185,20 +185,12 @@ export const Landing = () => {
                 Go to Dashboard <ArrowRight className="h-4 w-4" />
               </Link>
             ) : (
-              <>
-                <Link 
-                  to="/login" 
-                  className="text-sm font-semibold text-slate-700 hover:text-brandPrimary transition-colors px-4 py-2"
-                >
-                  Sign In
-                </Link>
-                <Link 
-                  to="/register" 
-                  className="btn-primary text-sm font-semibold py-2 px-4 shadow-sm"
-                >
-                  Get Started <ArrowRight className="h-4 w-4" />
-                </Link>
-              </>
+              <Link 
+                to="/register" 
+                className="btn-primary text-sm font-semibold py-2 px-4 shadow-sm"
+              >
+                Get Started <ArrowRight className="h-4 w-4" />
+              </Link>
             )}
           </div>
         </div>
@@ -782,4 +774,4 @@ export const Landing = () => {
   );
 };
 
-export default Landing;
+export default About;

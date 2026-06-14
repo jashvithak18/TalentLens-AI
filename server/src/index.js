@@ -23,13 +23,14 @@ app.use(helmet({
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
+  'https://talent-lens-ai-six.vercel.app',
   process.env.CLIENT_URL
 ].filter(Boolean);
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl)
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Allow requests with no origin (like mobile apps or curl) or allowed origins or vercel domains
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
