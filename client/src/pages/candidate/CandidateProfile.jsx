@@ -9,6 +9,7 @@ import {
   Award,
   Plus,
   Trash,
+  Pencil,
   CheckCircle,
   FileText,
   AlertCircle
@@ -23,11 +24,19 @@ const getResumeUrl = (url) => {
   return `${serverUrl}${normalizedUrl}`;
 };
 
+const formatDateForInput = (dateStr) => {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '';
+  return d.toISOString().split('T')[0];
+};
+
 const CandidateProfile = () => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('general');
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [editingItem, setEditingItem] = useState(null);
 
   // Skills state
   const [selectedSkills, setSelectedSkills] = useState([]);
@@ -204,10 +213,31 @@ const CandidateProfile = () => {
     }
   });
 
+  const updateSubSectionMutation = useMutation({
+    mutationFn: async ({ type, id, payload, isFormData }) => {
+      let endpoint = `/candidates/${type}/${id}`;
+      const config = isFormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {};
+      const res = await api.put(endpoint, payload, config);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['candidateProfile'] });
+      showSuccess('Entry updated successfully!');
+      setEditingItem(null);
+    },
+    onError: (err) => {
+      setErrorMsg(err.response?.data?.error || 'Failed to update entry.');
+    }
+  });
+
   const handleDeleteEntry = (type, id) => {
     if (window.confirm('Are you sure you want to delete this entry?')) {
       deleteSubSectionMutation.mutate({ type, id });
     }
+  };
+
+  const handleStartEdit = (type, item) => {
+    setEditingItem({ type, data: item });
   };
 
   const showSuccess = (msg) => {
@@ -264,56 +294,92 @@ const CandidateProfile = () => {
     e.preventDefault();
     const fd = new FormData(e.target);
     const technologies = fd.get('technologies').split(',').map(s => s.trim()).filter(Boolean);
-    addSubSectionMutation.mutate({
-      type: 'projects',
-      payload: {
-        title: fd.get('title'),
-        description: fd.get('description'),
-        technologies,
-        githubLink: fd.get('githubLink')
-      }
-    });
+    const payload = {
+      title: fd.get('title'),
+      description: fd.get('description'),
+      technologies,
+      githubLink: fd.get('githubLink')
+    };
+    if (editingItem) {
+      updateSubSectionMutation.mutate({
+        type: 'projects',
+        id: editingItem.data._id,
+        payload
+      });
+    } else {
+      addSubSectionMutation.mutate({
+        type: 'projects',
+        payload
+      });
+    }
     e.target.reset();
   };
 
   const handleAddExperience = (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
-    addSubSectionMutation.mutate({
-      type: 'experience',
-      payload: {
-        company: fd.get('company'),
-        role: fd.get('role'),
-        startDate: fd.get('startDate'),
-        endDate: fd.get('endDate') || null,
-        current: fd.get('current') === 'on',
-        description: fd.get('description')
-      }
-    });
+    const payload = {
+      company: fd.get('company'),
+      role: fd.get('role'),
+      startDate: fd.get('startDate'),
+      endDate: fd.get('endDate') || null,
+      current: fd.get('current') === 'on',
+      description: fd.get('description')
+    };
+    if (editingItem) {
+      updateSubSectionMutation.mutate({
+        type: 'experience',
+        id: editingItem.data._id,
+        payload
+      });
+    } else {
+      addSubSectionMutation.mutate({
+        type: 'experience',
+        payload
+      });
+    }
     e.target.reset();
   };
 
   const handleAddEducation = (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
-    addSubSectionMutation.mutate({
-      type: 'education',
-      payload: {
-        institution: fd.get('institution'),
-        degree: fd.get('degree'),
-        fieldOfStudy: fd.get('fieldOfStudy'),
-        startDate: fd.get('startDate') || null,
-        endDate: fd.get('endDate') || null,
-        grade: fd.get('grade')
-      }
-    });
+    const payload = {
+      institution: fd.get('institution'),
+      degree: fd.get('degree'),
+      fieldOfStudy: fd.get('fieldOfStudy'),
+      startDate: fd.get('startDate') || null,
+      endDate: fd.get('endDate') || null,
+      grade: fd.get('grade')
+    };
+    if (editingItem) {
+      updateSubSectionMutation.mutate({
+        type: 'education',
+        id: editingItem.data._id,
+        payload
+      });
+    } else {
+      addSubSectionMutation.mutate({
+        type: 'education',
+        payload
+      });
+    }
     e.target.reset();
   };
 
   const handleAddCertification = (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
-    addCertificationMutation.mutate(fd);
+    if (editingItem) {
+      updateSubSectionMutation.mutate({
+        type: 'certifications',
+        id: editingItem.data._id,
+        payload: fd,
+        isFormData: true
+      });
+    } else {
+      addCertificationMutation.mutate(fd);
+    }
     e.target.reset();
   };
 
@@ -352,7 +418,10 @@ const CandidateProfile = () => {
           return (
             <button
               key={t.id}
-              onClick={() => setActiveTab(t.id)}
+              onClick={() => {
+                setActiveTab(t.id);
+                setEditingItem(null);
+              }}
               className={`flex items-center space-x-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-all ${
                 activeTab === t.id
                   ? 'border-brandPrimary text-brandPrimary'
@@ -603,37 +672,87 @@ const CandidateProfile = () => {
 
         {activeTab === 'experience' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <form onSubmit={handleAddExperience} className="lg:col-span-1 space-y-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-600">Add Experience</h3>
+            <form
+              key={editingItem && editingItem.type === 'experience' ? editingItem.data._id : 'add-exp'}
+              onSubmit={handleAddExperience}
+              className="lg:col-span-1 space-y-4"
+            >
+              <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-600">
+                {editingItem && editingItem.type === 'experience' ? 'Edit Experience' : 'Add Experience'}
+              </h3>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-semibold text-slate-700">Company</label>
-                <input type="text" name="company" required className="custom-input text-xs" />
+                <input
+                  type="text"
+                  name="company"
+                  required
+                  defaultValue={editingItem && editingItem.type === 'experience' ? editingItem.data.company : ''}
+                  className="custom-input text-xs"
+                />
               </div>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-semibold text-slate-700">Role</label>
-                <input type="text" name="role" required className="custom-input text-xs" />
+                <input
+                  type="text"
+                  name="role"
+                  required
+                  defaultValue={editingItem && editingItem.type === 'experience' ? editingItem.data.role : ''}
+                  className="custom-input text-xs"
+                />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-semibold text-slate-700">Start Date</label>
-                  <input type="date" name="startDate" required className="custom-input text-xs" />
+                  <input
+                    type="date"
+                    name="startDate"
+                    required
+                    defaultValue={editingItem && editingItem.type === 'experience' ? formatDateForInput(editingItem.data.startDate) : ''}
+                    className="custom-input text-xs"
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-semibold text-slate-700">End Date</label>
-                  <input type="date" name="endDate" className="custom-input text-xs" />
+                  <input
+                    type="date"
+                    name="endDate"
+                    defaultValue={editingItem && editingItem.type === 'experience' ? formatDateForInput(editingItem.data.endDate) : ''}
+                    className="custom-input text-xs"
+                  />
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                <input type="checkbox" name="current" id="curr" />
+                <input
+                  type="checkbox"
+                  name="current"
+                  id="curr"
+                  defaultChecked={editingItem && editingItem.type === 'experience' ? editingItem.data.current : false}
+                />
                 <label htmlFor="curr" className="text-[10px] text-slate-650 font-semibold">I currently work here</label>
               </div>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-semibold text-slate-700">Description</label>
-                <textarea name="description" rows={3} className="custom-input text-xs" />
+                <textarea
+                  name="description"
+                  rows={3}
+                  defaultValue={editingItem && editingItem.type === 'experience' ? editingItem.data.description : ''}
+                  className="custom-input text-xs"
+                />
               </div>
-              <button type="submit" className="w-full btn-primary text-xs font-semibold py-2">
-                Add Role
-              </button>
+              <div className="flex space-x-2">
+                {editingItem && editingItem.type === 'experience' && (
+                  <button
+                    type="button"
+                    onClick={() => setEditingItem(null)}
+                    className="w-1/3 btn-secondary text-xs font-semibold py-2"
+                  >
+                    Cancel
+                  </button>
+                )}
+                <button type="submit" className="flex-1 btn-primary text-xs font-semibold py-2">
+                  {editingItem && editingItem.type === 'experience' ? 'Save Changes' : 'Add Role'}
+                </button>
+              </div>
             </form>
 
             <div className="lg:col-span-2 space-y-4">
@@ -652,13 +771,22 @@ const CandidateProfile = () => {
                             {new Date(exp.startDate).toLocaleDateString()} - {exp.current ? 'Present' : new Date(exp.endDate).toLocaleDateString()}
                           </span>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteEntry('experience', exp._id)}
-                          className="text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50 transition-colors"
-                        >
-                          <Trash size={14} />
-                        </button>
+                        <div className="flex space-x-1">
+                          <button
+                            type="button"
+                            onClick={() => handleStartEdit('experience', exp)}
+                            className="text-indigo-600 hover:text-indigo-850 p-1 rounded hover:bg-indigo-50 transition-colors"
+                          >
+                            <Pencil size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteEntry('experience', exp._id)}
+                            className="text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50 transition-colors"
+                          >
+                            <Trash size={14} />
+                          </button>
+                        </div>
                       </div>
                       <p className="text-[11px] text-slate-600 mt-2 leading-relaxed">{exp.description}</p>
                     </div>
@@ -671,27 +799,68 @@ const CandidateProfile = () => {
 
         {activeTab === 'projects' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <form onSubmit={handleAddProject} className="lg:col-span-1 space-y-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-600">Add Project</h3>
+            <form
+              key={editingItem && editingItem.type === 'projects' ? editingItem.data._id : 'add-proj'}
+              onSubmit={handleAddProject}
+              className="lg:col-span-1 space-y-4"
+            >
+              <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-600">
+                {editingItem && editingItem.type === 'projects' ? 'Edit Project' : 'Add Project'}
+              </h3>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-semibold text-slate-700">Project Title</label>
-                <input type="text" name="title" required className="custom-input text-xs" />
+                <input
+                  type="text"
+                  name="title"
+                  required
+                  defaultValue={editingItem && editingItem.type === 'projects' ? editingItem.data.title : ''}
+                  className="custom-input text-xs"
+                />
               </div>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-semibold text-slate-700">Technologies (Comma-separated)</label>
-                <input type="text" name="technologies" required placeholder="React, Node.js" className="custom-input text-xs" />
+                <input
+                  type="text"
+                  name="technologies"
+                  required
+                  placeholder="React, Node.js"
+                  defaultValue={editingItem && editingItem.type === 'projects' ? editingItem.data.technologies?.join(', ') : ''}
+                  className="custom-input text-xs"
+                />
               </div>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-semibold text-slate-700">GitHub Link</label>
-                <input type="url" name="githubLink" placeholder="https://github.com/..." className="custom-input text-xs" />
+                <input
+                  type="url"
+                  name="githubLink"
+                  placeholder="https://github.com/..."
+                  defaultValue={editingItem && editingItem.type === 'projects' ? (editingItem.data.githubLink || editingItem.data.link || '') : ''}
+                  className="custom-input text-xs"
+                />
               </div>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-semibold text-slate-700">Description</label>
-                <textarea name="description" rows={3} className="custom-input text-xs" />
+                <textarea
+                  name="description"
+                  rows={3}
+                  defaultValue={editingItem && editingItem.type === 'projects' ? editingItem.data.description : ''}
+                  className="custom-input text-xs"
+                />
               </div>
-              <button type="submit" className="w-full btn-primary text-xs font-semibold py-2">
-                Add Project
-              </button>
+              <div className="flex space-x-2">
+                {editingItem && editingItem.type === 'projects' && (
+                  <button
+                    type="button"
+                    onClick={() => setEditingItem(null)}
+                    className="w-1/3 btn-secondary text-xs font-semibold py-2"
+                  >
+                    Cancel
+                  </button>
+                )}
+                <button type="submit" className="flex-1 btn-primary text-xs font-semibold py-2">
+                  {editingItem && editingItem.type === 'projects' ? 'Save Changes' : 'Add Project'}
+                </button>
+              </div>
             </form>
 
             <div className="lg:col-span-2 space-y-4">
@@ -702,15 +871,24 @@ const CandidateProfile = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {profile.projects?.map((proj, idx) => (
                     <div key={idx} className="bg-slate-50 border border-slate-200 rounded-lg p-3.5 relative">
-                      <div className="flex justify-between items-start mb-1">
+                      <div className="flex justify-between items-start mb-1 animate-all">
                         <p className="text-xs font-bold text-slate-800">{proj.title}</p>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteEntry('projects', proj._id)}
-                          className="text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50 transition-colors"
-                        >
-                          <Trash size={14} />
-                        </button>
+                        <div className="flex space-x-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleStartEdit('projects', proj)}
+                            className="text-indigo-600 hover:text-indigo-850 p-1 rounded hover:bg-indigo-50 transition-colors"
+                          >
+                            <Pencil size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteEntry('projects', proj._id)}
+                            className="text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50 transition-colors"
+                          >
+                            <Trash size={14} />
+                          </button>
+                        </div>
                       </div>
                       <p className="text-[11px] text-slate-600 mt-1.5 line-clamp-2">{proj.description}</p>
                       <div className="flex flex-wrap gap-1 mt-3">
@@ -730,37 +908,90 @@ const CandidateProfile = () => {
 
         {activeTab === 'education' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <form onSubmit={handleAddEducation} className="lg:col-span-1 space-y-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-600">Add Education</h3>
+            <form
+              key={editingItem && editingItem.type === 'education' ? editingItem.data._id : 'add-edu'}
+              onSubmit={handleAddEducation}
+              className="lg:col-span-1 space-y-4"
+            >
+              <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-600">
+                {editingItem && editingItem.type === 'education' ? 'Edit Education' : 'Add Education'}
+              </h3>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-semibold text-slate-700">Institution</label>
-                <input type="text" name="institution" required placeholder="e.g. Stanford University" className="custom-input text-xs" />
+                <input
+                  type="text"
+                  name="institution"
+                  required
+                  placeholder="e.g. Stanford University"
+                  defaultValue={editingItem && editingItem.type === 'education' ? editingItem.data.institution : ''}
+                  className="custom-input text-xs"
+                />
               </div>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-semibold text-slate-700">Degree</label>
-                <input type="text" name="degree" required placeholder="e.g. Bachelor of Science" className="custom-input text-xs" />
+                <input
+                  type="text"
+                  name="degree"
+                  required
+                  placeholder="e.g. Bachelor of Science"
+                  defaultValue={editingItem && editingItem.type === 'education' ? editingItem.data.degree : ''}
+                  className="custom-input text-xs"
+                />
               </div>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-semibold text-slate-700">Field of Study</label>
-                <input type="text" name="fieldOfStudy" placeholder="e.g. Computer Science" className="custom-input text-xs" />
+                <input
+                  type="text"
+                  name="fieldOfStudy"
+                  placeholder="e.g. Computer Science"
+                  defaultValue={editingItem && editingItem.type === 'education' ? editingItem.data.fieldOfStudy : ''}
+                  className="custom-input text-xs"
+                />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-semibold text-slate-700">Start Date</label>
-                  <input type="date" name="startDate" className="custom-input text-xs" />
+                  <input
+                    type="date"
+                    name="startDate"
+                    defaultValue={editingItem && editingItem.type === 'education' ? formatDateForInput(editingItem.data.startDate) : ''}
+                    className="custom-input text-xs"
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-semibold text-slate-700">End Date</label>
-                  <input type="date" name="endDate" className="custom-input text-xs" />
+                  <input
+                    type="date"
+                    name="endDate"
+                    defaultValue={editingItem && editingItem.type === 'education' ? formatDateForInput(editingItem.data.endDate) : ''}
+                    className="custom-input text-xs"
+                  />
                 </div>
               </div>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-semibold text-slate-700">Grade / GPA</label>
-                <input type="text" name="grade" placeholder="e.g. 3.8 / 4.0" className="custom-input text-xs" />
+                <input
+                  type="text"
+                  name="grade"
+                  placeholder="e.g. 3.8 / 4.0"
+                  defaultValue={editingItem && editingItem.type === 'education' ? editingItem.data.grade : ''}
+                  className="custom-input text-xs"
+                />
               </div>
-              <button type="submit" className="w-full btn-primary text-xs font-semibold py-2">
-                Add Education
-              </button>
+              <div className="flex space-x-2">
+                {editingItem && editingItem.type === 'education' && (
+                  <button
+                    type="button"
+                    onClick={() => setEditingItem(null)}
+                    className="w-1/3 btn-secondary text-xs font-semibold py-2"
+                  >
+                    Cancel
+                  </button>
+                )}
+                <button type="submit" className="flex-1 btn-primary text-xs font-semibold py-2">
+                  {editingItem && editingItem.type === 'education' ? 'Save Changes' : 'Add Education'}
+                </button>
+              </div>
             </form>
 
             <div className="lg:col-span-2 space-y-4">
@@ -779,13 +1010,22 @@ const CandidateProfile = () => {
                             {edu.startDate ? new Date(edu.startDate).toLocaleDateString() : ''} - {edu.endDate ? new Date(edu.endDate).toLocaleDateString() : 'Present'}
                           </span>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteEntry('education', edu._id)}
-                          className="text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50 transition-colors"
-                        >
-                          <Trash size={14} />
-                        </button>
+                        <div className="flex space-x-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleStartEdit('education', edu)}
+                            className="text-indigo-600 hover:text-indigo-850 p-1 rounded hover:bg-indigo-50 transition-colors"
+                          >
+                            <Pencil size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteEntry('education', edu._id)}
+                            className="text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50 transition-colors"
+                          >
+                            <Trash size={14} />
+                          </button>
+                        </div>
                       </div>
                       {edu.grade && (
                         <span className="inline-block mt-2 text-[10px] bg-slate-200 text-slate-750 px-2 py-0.5 rounded font-medium">
@@ -802,45 +1042,97 @@ const CandidateProfile = () => {
 
         {activeTab === 'certifications' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <form onSubmit={handleAddCertification} className="lg:col-span-1 space-y-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-600">Add Certification</h3>
+            <form
+              key={editingItem && editingItem.type === 'certifications' ? editingItem.data._id : 'add-cert'}
+              onSubmit={handleAddCertification}
+              className="lg:col-span-1 space-y-4"
+            >
+              <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-600">
+                {editingItem && editingItem.type === 'certifications' ? 'Edit Certification' : 'Add Certification'}
+              </h3>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-semibold text-slate-700">Certification Name</label>
-                <input type="text" name="name" required placeholder="e.g. AWS Solutions Architect" className="custom-input text-xs" />
+                <input
+                  type="text"
+                  name="name"
+                  required
+                  placeholder="e.g. AWS Solutions Architect"
+                  defaultValue={editingItem && editingItem.type === 'certifications' ? editingItem.data.name : ''}
+                  className="custom-input text-xs"
+                />
               </div>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-semibold text-slate-700">Issuer</label>
-                <input type="text" name="issuer" placeholder="e.g. Amazon Web Services" className="custom-input text-xs" />
+                <input
+                  type="text"
+                  name="issuer"
+                  placeholder="e.g. Amazon Web Services"
+                  defaultValue={editingItem && editingItem.type === 'certifications' ? editingItem.data.issuer : ''}
+                  className="custom-input text-xs"
+                />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-semibold text-slate-700">Issue Date</label>
-                  <input type="date" name="issueDate" className="custom-input text-xs" />
+                  <input
+                    type="date"
+                    name="issueDate"
+                    defaultValue={editingItem && editingItem.type === 'certifications' ? formatDateForInput(editingItem.data.issueDate) : ''}
+                    className="custom-input text-xs"
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-semibold text-slate-700">Expiry Date</label>
-                  <input type="date" name="expiryDate" className="custom-input text-xs" />
+                  <input
+                    type="date"
+                    name="expiryDate"
+                    defaultValue={editingItem && editingItem.type === 'certifications' ? formatDateForInput(editingItem.data.expiryDate) : ''}
+                    className="custom-input text-xs"
+                  />
                 </div>
               </div>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-semibold text-slate-700">Credential URL</label>
-                <input type="url" name="credentialUrl" placeholder="https://..." className="custom-input text-xs" />
+                <input
+                  type="url"
+                  name="credentialUrl"
+                  placeholder="https://..."
+                  defaultValue={editingItem && editingItem.type === 'certifications' ? editingItem.data.credentialUrl : ''}
+                  className="custom-input text-xs"
+                />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold text-slate-700">Certificate PDF Upload</label>
+                <label className="text-[10px] font-semibold text-slate-700">
+                  {editingItem && editingItem.type === 'certifications' ? 'Update Certificate PDF (Optional)' : 'Certificate PDF Upload'}
+                </label>
                 <div className="border border-dashed border-darkBorder rounded-lg p-3 hover:border-brandPrimary transition-all cursor-pointer relative text-center">
                   <input type="file" name="pdf" accept=".pdf" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                   <Upload size={18} className="text-indigo-500 mx-auto mb-1" />
-                  <span className="text-[10px] text-slate-605 block">Choose certificate PDF</span>
+                  <span className="text-[10px] text-slate-605 block">
+                    {editingItem && editingItem.type === 'certifications' && editingItem.data.pdfUrl ? 'Leave empty to keep existing PDF' : 'Choose certificate PDF'}
+                  </span>
                 </div>
               </div>
-              <button 
-                type="submit" 
-                disabled={addCertificationMutation.isPending}
-                className="w-full btn-primary text-xs font-semibold py-2"
-              >
-                {addCertificationMutation.isPending ? 'Adding...' : 'Add Certification'}
-              </button>
+              <div className="flex space-x-2">
+                {editingItem && editingItem.type === 'certifications' && (
+                  <button
+                    type="button"
+                    onClick={() => setEditingItem(null)}
+                    className="w-1/3 btn-secondary text-xs font-semibold py-2"
+                  >
+                    Cancel
+                  </button>
+                )}
+                <button 
+                  type="submit" 
+                  disabled={addCertificationMutation.isPending || updateSubSectionMutation.isPending}
+                  className="flex-1 btn-primary text-xs font-semibold py-2"
+                >
+                  {addCertificationMutation.isPending || updateSubSectionMutation.isPending 
+                    ? 'Saving...' 
+                    : (editingItem && editingItem.type === 'certifications' ? 'Save Changes' : 'Add Certification')}
+                </button>
+              </div>
             </form>
 
             <div className="lg:col-span-2 space-y-4">
@@ -852,15 +1144,24 @@ const CandidateProfile = () => {
                   {profile.certifications?.map((cert, idx) => (
                     <div key={idx} className="bg-slate-50 border border-slate-200 rounded-lg p-3.5 flex flex-col justify-between">
                       <div>
-                        <div className="flex justify-between items-start mb-1">
+                        <div className="flex justify-between items-start mb-1 animate-all">
                           <p className="text-xs font-bold text-slate-800">{cert.name}</p>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteEntry('certifications', cert._id)}
-                            className="text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50 transition-colors"
-                          >
-                            <Trash size={14} />
-                          </button>
+                          <div className="flex space-x-1">
+                            <button
+                              type="button"
+                              onClick={() => handleStartEdit('certifications', cert)}
+                              className="text-indigo-600 hover:text-indigo-850 p-1 rounded hover:bg-indigo-50 transition-colors animate-all"
+                            >
+                              <Pencil size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteEntry('certifications', cert._id)}
+                              className="text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50 transition-colors"
+                            >
+                              <Trash size={14} />
+                            </button>
+                          </div>
                         </div>
                         <p className="text-[10px] text-indigo-600 mt-0.5">{cert.issuer}</p>
                         <span className="text-[9px] text-slate-550 block mt-0.5">
@@ -868,7 +1169,7 @@ const CandidateProfile = () => {
                           {cert.expiryDate && ` • Expires: ${new Date(cert.expiryDate).toLocaleDateString()}`}
                         </span>
                       </div>
-                      <div className="flex space-x-2 mt-3 pt-2 border-t border-slate-100">
+                      <div className="flex space-x-2 mt-3 pt-2 border-t border-slate-100 font-semibold">
                         {cert.credentialUrl && (
                           <a 
                             href={cert.credentialUrl} 

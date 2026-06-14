@@ -398,3 +398,54 @@ exports.deleteSubSection = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.updateSubSection = async (req, res, next) => {
+  const { type, id } = req.params;
+  const validTypes = ['experience', 'education', 'projects', 'certifications'];
+  
+  if (!validTypes.includes(type)) {
+    return res.status(400).json({ success: false, error: 'Invalid sub-section type' });
+  }
+
+  try {
+    const profile = await CandidateProfile.findOne({ user: req.user.id });
+    if (!profile) {
+      return res.status(404).json({ success: false, error: 'Profile not found' });
+    }
+
+    const subDoc = profile[type].id(id);
+    if (!subDoc) {
+      return res.status(404).json({ success: false, error: 'Entry not found' });
+    }
+
+    let updateData = { ...req.body };
+    if (type === 'certifications' && req.file) {
+      const uploadResult = await uploadToCloudinary(req.file.path, 'certifications');
+      updateData.pdfUrl = uploadResult.url;
+      updateData.pdfPublicId = uploadResult.public_id;
+    }
+
+    Object.keys(updateData).forEach(key => {
+      if (key !== '_id') {
+        if (type === 'projects' && key === 'technologies' && typeof updateData[key] === 'string') {
+          subDoc[key] = updateData[key].split(',').map(s => s.trim()).filter(Boolean);
+        } else {
+          subDoc[key] = updateData[key];
+        }
+      }
+    });
+
+    await profile.save();
+
+    if (type === 'projects' || type === 'experience') {
+      const inferred = await aiDetectHiddenSkills(profile);
+      profile.inferredSkills = inferred;
+      await profile.save();
+    }
+
+    res.status(200).json({ success: true, profile });
+  } catch (error) {
+    next(error);
+  }
+};
+
