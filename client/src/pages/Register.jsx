@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate as useNav, Link as RouterLink } from 'react-router-dom';
 import { authAPI } from '../utils/api';
 import { Shield, Mail, Lock, User, Building, AlertCircle, CheckCircle } from 'lucide-react';
+import Logo from '../components/Logo';
 
 const Register = () => {
   const [role, setRole] = useState('candidate');

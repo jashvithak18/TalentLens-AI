@@ -20,6 +20,7 @@ import {
   Eye
 } from 'lucide-react';
 import { toggleBlindMode } from '../redux/authSlice';
+import Logo from './Logo';
 
 const Sidebar = () => {
   const location = useLocation();

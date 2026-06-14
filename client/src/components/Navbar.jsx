@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { Bell, Search, Menu, User as UserIcon } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../utils/api';
+import Logo from './Logo';
 
 const Navbar = () => {
   const { user } = useSelector((state) => state.auth);

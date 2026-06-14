@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { setCredentials } from '../redux/authSlice';
 import { authAPI } from '../utils/api';
 import { Shield, Mail, Lock, AlertCircle, ArrowRight } from 'lucide-react';
+import Logo from '../components/Logo';
 
 const Login = () => {
   const [email, setEmail] = useState('');
