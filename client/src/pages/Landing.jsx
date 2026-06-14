@@ -7,6 +7,7 @@ import {
   ChevronRight, Brain, Zap, MessageSquare, BarChart3, AlertCircle 
 } from 'lucide-react';
 import { Logo } from '../components/Logo';
+import api from '../utils/api';
 
 // Hook for count-up animation
 const useCountUp = (target, duration = 2) => {
@@ -184,11 +185,31 @@ export const Landing = () => {
     return () => clearTimeout(interval);
   }, []);
 
+  const [jobs, setJobs] = useState([]);
+  
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const res = await api.get('/jobs');
+        if (res.data.success) {
+          setJobs(res.data.jobs || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch jobs for landing page stats:", err);
+      }
+    };
+    fetchJobs();
+  }, []);
+
+  const activeJobsCount = jobs.length || 15;
+  const companiesCount = new Set(jobs.map(j => j.companyName).filter(Boolean)).size || 8;
+  const skillsCount = new Set(jobs.flatMap(j => j.requiredSkills || []).filter(Boolean)).size || 142;
+
   // Stats Counters
-  const countProfiles = useCountUp(50000, 1.5);
+  const countJobs = useCountUp(activeJobsCount, 1.5);
+  const countCompanies = useCountUp(companiesCount, 1.5);
+  const countSkills = useCountUp(skillsCount, 1.5);
   const countAccuracy = useCountUp(95, 1.5);
-  const countSkills = useCountUp(100000, 1.5);
-  const countRecruiters = useCountUp(500, 1.5);
 
   return (
     <div className="bg-[#FAFAFA] min-h-screen selection:bg-brandPrimary/10 overflow-x-hidden">
@@ -198,10 +219,7 @@ export const Landing = () => {
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Logo iconSize="h-8 w-8" textSize="text-xl" />
           <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
-            <a href="#features" className="hover:text-brandPrimary transition-colors">Features</a>
             <a href="#problem" className="hover:text-brandPrimary transition-colors">The Solution</a>
-            <a href="#demo" className="hover:text-brandPrimary transition-colors">Demo</a>
-            <a href="#pricing" className="hover:text-brandPrimary transition-colors">Pricing</a>
           </nav>
           <div className="flex items-center gap-4">
             <Link 
@@ -266,9 +284,6 @@ export const Landing = () => {
             <button onClick={() => navigate('/register')} className="btn-primary py-3 px-6 text-sm font-semibold">
               Get Started
             </button>
-            <a href="#demo" className="btn-secondary py-3 px-6 text-sm font-semibold">
-              <Play className="h-4 w-4 fill-slate-500 text-slate-500" /> Watch Demo
-            </a>
           </motion.div>
         </div>
 
@@ -328,45 +343,33 @@ export const Landing = () => {
         </div>
       </section>
 
-      {/* 3. Trust Bar & Counters */}
+      {/* 3. Real-Time Platform Statistics */}
       <section className="bg-white border-y border-[#E5E7EB] py-10 px-6">
-        <div className="max-w-7xl mx-auto space-y-8">
-          <div className="text-center text-xs font-semibold text-slate-400 uppercase tracking-widest">
-            Empowering modern teams at
-          </div>
-          {/* Company Logos Row */}
-          <div className="flex flex-wrap justify-center items-center gap-10 md:gap-20 opacity-45 grayscale hover:grayscale-0 transition-all">
-            <span className="font-extrabold text-xl text-slate-700 tracking-tight">Google</span>
-            <span className="font-extrabold text-xl text-slate-700 tracking-tight">Microsoft</span>
-            <span className="font-extrabold text-xl text-slate-700 tracking-tight">amazon</span>
-            <span className="font-extrabold text-xl text-slate-700 tracking-tight">Meta</span>
-            <span className="font-extrabold text-xl text-slate-700 tracking-tight">NETFLIX</span>
-          </div>
-
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 pt-8 border-t border-[#F3F4F6] text-center">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
             <div>
               <div className="text-4xl font-extrabold text-brandPrimary tracking-tight font-jakarta">
-                {countProfiles.toLocaleString()}+
+                {countJobs}
               </div>
-              <div className="text-xs text-slate-400 mt-1 font-semibold uppercase">Profiles Analyzed</div>
+              <div className="text-xs text-slate-400 mt-1 font-semibold uppercase">Active Openings</div>
             </div>
             <div>
               <div className="text-4xl font-extrabold text-brandPrimary tracking-tight font-jakarta">
                 {countAccuracy}%
               </div>
-              <div className="text-xs text-slate-400 mt-1 font-semibold uppercase">Match Accuracy</div>
+              <div className="text-xs text-slate-400 mt-1 font-semibold uppercase">AI Match Accuracy</div>
             </div>
             <div>
               <div className="text-4xl font-extrabold text-brandPrimary tracking-tight font-jakarta">
-                {countSkills.toLocaleString()}+
+                {countSkills}
               </div>
               <div className="text-xs text-slate-400 mt-1 font-semibold uppercase">Skills Mapped</div>
             </div>
             <div>
               <div className="text-4xl font-extrabold text-brandPrimary tracking-tight font-jakarta">
-                {countRecruiters}+
+                {countCompanies}
               </div>
-              <div className="text-xs text-slate-400 mt-1 font-semibold uppercase">Active Recruiters</div>
+              <div className="text-xs text-slate-400 mt-1 font-semibold uppercase">Hiring Organizations</div>
             </div>
           </div>
         </div>
@@ -782,84 +785,6 @@ export const Landing = () => {
         </div>
       </section>
 
-      {/* 12. Pricing Section */}
-      <section id="pricing" className="py-24 px-6 max-w-7xl mx-auto space-y-16">
-        <div className="text-center max-w-2xl mx-auto space-y-4">
-          <div className="text-xs font-bold text-brandPrimary uppercase tracking-widest">
-            Pricing Plans
-          </div>
-          <h2 className="text-3xl font-extrabold text-slate-900 font-jakarta tracking-tight">
-            Transparent SaaS Pricing
-          </h2>
-          <p className="text-slate-500">
-            Get started for free or upgrade for enterprise screening pipelines.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {/* Starter */}
-          <div className="bg-white border border-[#E5E7EB] rounded-3xl p-8 shadow-sm flex flex-col justify-between">
-            <div className="space-y-6">
-              <div>
-                <h4 className="text-sm font-bold text-slate-500 font-jakarta">Starter</h4>
-                <div className="mt-4 flex items-baseline gap-1">
-                  <span className="text-4xl font-extrabold text-slate-900 font-jakarta">$0</span>
-                  <span className="text-slate-400 text-xs font-semibold">/month</span>
-                </div>
-              </div>
-              <ul className="space-y-3.5 text-xs text-slate-500 border-t border-slate-100 pt-6">
-                <li className="flex gap-2 items-center"><Check className="h-4 w-4 text-brandAccent" /> 5 candidate parses/mo</li>
-                <li className="flex gap-2 items-center"><Check className="h-4 w-4 text-brandAccent" /> 1 open job posting</li>
-                <li className="flex gap-2 items-center"><Check className="h-4 w-4 text-brandAccent" /> Basic assessments</li>
-              </ul>
-            </div>
-            <button onClick={() => navigate('/register')} className="btn-secondary w-full py-2.5 mt-8 font-semibold text-xs">Get Started</button>
-          </div>
-
-          {/* Professional */}
-          <div className="bg-white border-2 border-brandPrimary rounded-3xl p-8 shadow-md relative flex flex-col justify-between">
-            <div className="absolute top-0 right-8 -translate-y-1/2 bg-brandPrimary text-white text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-              Most Popular
-            </div>
-            <div className="space-y-6">
-              <div>
-                <h4 className="text-sm font-bold text-brandPrimary font-jakarta">Professional</h4>
-                <div className="mt-4 flex items-baseline gap-1">
-                  <span className="text-4xl font-extrabold text-slate-900 font-jakarta">$149</span>
-                  <span className="text-slate-400 text-xs font-semibold">/month</span>
-                </div>
-              </div>
-              <ul className="space-y-3.5 text-xs text-slate-600 border-t border-slate-100 pt-6">
-                <li className="flex gap-2 items-center"><Check className="h-4 w-4 text-brandAccent" /> 100 candidate parses/mo</li>
-                <li className="flex gap-2 items-center"><Check className="h-4 w-4 text-brandAccent" /> Unlimited active jobs</li>
-                <li className="flex gap-2 items-center"><Check className="h-4 w-4 text-brandAccent" /> AI Copilot access</li>
-                <li className="flex gap-2 items-center"><Check className="h-4 w-4 text-brandAccent" /> Custom MCQ + coding VM runner</li>
-              </ul>
-            </div>
-            <button onClick={() => navigate('/register')} className="btn-primary w-full py-2.5 mt-8 font-semibold text-xs shadow-sm">Upgrade to Pro</button>
-          </div>
-
-          {/* Enterprise */}
-          <div className="bg-white border border-[#E5E7EB] rounded-3xl p-8 shadow-sm flex flex-col justify-between">
-            <div className="space-y-6">
-              <div>
-                <h4 className="text-sm font-bold text-slate-500 font-jakarta">Enterprise</h4>
-                <div className="mt-4 flex items-baseline gap-1">
-                  <span className="text-4xl font-extrabold text-slate-900 font-jakarta">Custom</span>
-                </div>
-              </div>
-              <ul className="space-y-3.5 text-xs text-slate-500 border-t border-slate-100 pt-6">
-                <li className="flex gap-2 items-center"><Check className="h-4 w-4 text-brandAccent" /> Unlimited candidate parses</li>
-                <li className="flex gap-2 items-center"><Check className="h-4 w-4 text-brandAccent" /> Custom VM execution environments</li>
-                <li className="flex gap-2 items-center"><Check className="h-4 w-4 text-brandAccent" /> API access & ATS integrations</li>
-                <li className="flex gap-2 items-center"><Check className="h-4 w-4 text-brandAccent" /> Dedicated support team</li>
-              </ul>
-            </div>
-            <button onClick={() => navigate('/register')} className="btn-secondary w-full py-2.5 mt-8 font-semibold text-xs">Contact Sales</button>
-          </div>
-        </div>
-      </section>
-
       {/* 13. Final CTA */}
       <section className="bg-slate-900 text-white py-24 px-6 relative overflow-hidden">
         <div className="absolute inset-0 grid-bg opacity-5" />
@@ -874,9 +799,6 @@ export const Landing = () => {
             <button onClick={() => navigate('/register')} className="btn-primary py-3 px-6 text-sm font-semibold">
               Get Started for Free
             </button>
-            <a href="#demo" className="btn-secondary py-3 px-6 text-sm font-semibold border-slate-700 bg-slate-800 text-gray-200 hover:bg-slate-700">
-              Book Demo
-            </a>
           </div>
         </div>
       </section>
