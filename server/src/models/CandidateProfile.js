@@ -31,7 +31,9 @@ const CertificationSchema = new mongoose.Schema({
   issuer: String,
   issueDate: Date,
   expiryDate: Date,
-  credentialUrl: String
+  credentialUrl: String,
+  pdfUrl: String,
+  pdfPublicId: String
 });
 
 const CandidateProfileSchema = new mongoose.Schema({
@@ -42,8 +44,12 @@ const CandidateProfileSchema = new mongoose.Schema({
     unique: true
   },
   title: String,
+  headline: String,
+  pronouns: String,
   bio: String,
   location: String,
+  city: String,
+  country: String,
   avatar: String,
   resumeUrl: String,
   resumePublicId: String,

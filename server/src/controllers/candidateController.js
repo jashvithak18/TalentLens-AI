@@ -25,7 +25,7 @@ exports.getProfile = async (req, res, next) => {
 
 // Update profile basic fields
 exports.updateProfile = async (req, res, next) => {
-  const { title, bio, location, socialLinks, skills, isBlindModeEnabled } = req.body;
+  const { title, headline, pronouns, bio, location, city, country, socialLinks, skills, isBlindModeEnabled } = req.body;
 
   try {
     let profile = await CandidateProfile.findOne({ user: req.user.id });
@@ -34,8 +34,12 @@ exports.updateProfile = async (req, res, next) => {
     }
 
     if (title !== undefined) profile.title = title;
+    if (headline !== undefined) profile.headline = headline;
+    if (pronouns !== undefined) profile.pronouns = pronouns;
     if (bio !== undefined) profile.bio = bio;
     if (location !== undefined) profile.location = location;
+    if (city !== undefined) profile.city = city;
+    if (country !== undefined) profile.country = country;
     if (socialLinks !== undefined) profile.socialLinks = socialLinks;
     if (skills !== undefined) {
       profile.skills = skills;
@@ -210,8 +214,35 @@ exports.addProject = async (req, res, next) => {
 exports.addCertification = async (req, res, next) => {
   try {
     const profile = await CandidateProfile.findOne({ user: req.user.id });
-    profile.certifications.push(req.body);
+    let certData = { ...req.body };
+    if (req.file) {
+      const uploadResult = await uploadToCloudinary(req.file.path, 'certifications');
+      certData.pdfUrl = uploadResult.url;
+      certData.pdfPublicId = uploadResult.public_id;
+    }
+    profile.certifications.push(certData);
     await profile.save();
+    res.status(200).json({ success: true, profile });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.uploadAvatar = async (req, res, next) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, error: 'Please upload an image file.' });
+  }
+
+  try {
+    const uploadResult = await uploadToCloudinary(req.file.path, 'avatars');
+    let profile = await CandidateProfile.findOne({ user: req.user.id });
+    if (!profile) {
+      profile = new CandidateProfile({ user: req.user.id });
+    }
+
+    profile.avatar = uploadResult.url;
+    await profile.save();
+
     res.status(200).json({ success: true, profile });
   } catch (error) {
     next(error);
