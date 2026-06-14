@@ -56,23 +56,8 @@ const App = () => {
           {token && <Navbar />}
           <main className={`flex-1 ${token ? 'p-6 overflow-y-auto' : ''}`}>
             <Routes>
-              {/* Redirect root based on role or show Landing */}
-              <Route
-                path="/"
-                element={
-                  token ? (
-                    user?.role === 'candidate' ? (
-                      <Navigate to="/candidate/dashboard" replace />
-                    ) : user?.role === 'recruiter' ? (
-                      <Navigate to="/recruiter/dashboard" replace />
-                    ) : (
-                      <Navigate to="/admin/dashboard" replace />
-                    )
-                  ) : (
-                    <Landing />
-                  )
-                }
-              />
+              {/* Landing Page as permanent Home Page */}
+              <Route path="/" element={<Landing />} />
 
               {/* Auth Routes */}
               <Route path="/login" element={!token ? <Login /> : <Navigate to="/" />} />

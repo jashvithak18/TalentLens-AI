@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { 
   ArrowRight, Play, Calendar, Check, X, Shield, Users, 
   Cpu, FileText, Database, Sparkles, TrendingUp, Trophy, 
@@ -9,34 +10,6 @@ import {
 import { Logo } from '../components/Logo';
 import api from '../utils/api';
 
-// Hook for count-up animation
-const useCountUp = (target, duration = 2) => {
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    let start = 0;
-    const end = parseInt(target);
-    if (start === end) return;
-
-    let totalMiliseconds = duration * 1000;
-    let incrementTime = Math.abs(Math.floor(totalMiliseconds / end));
-    incrementTime = Math.max(incrementTime, 20); // Limit speed to 50fps
-
-    const timer = setInterval(() => {
-      start += Math.ceil(end / (totalMiliseconds / incrementTime));
-      if (start >= end) {
-        clearInterval(timer);
-        setCount(end);
-      } else {
-        setCount(start);
-      }
-    }, incrementTime);
-
-    return () => clearInterval(timer);
-  }, [target, duration]);
-
-  return count;
-};
 
 // SVG Animated Radar Chart for Landing Page
 const LandingRadarChart = ({ problemSolving = 85, communication = 70, leadership = 65, adaptability = 80, reliability = 90, learningVelocity = 95 }) => {
@@ -152,6 +125,7 @@ const LandingRadarChart = ({ problemSolving = 85, communication = 70, leadership
 
 export const Landing = () => {
   const navigate = useNavigate();
+  const { token, user } = useSelector((state) => state.auth);
   const [pipelineStep, setPipelineStep] = useState(0);
   const [copilotMessages, setCopilotMessages] = useState([
     { role: 'user', text: 'Find high-potential MERN stack developers.' }
@@ -185,31 +159,6 @@ export const Landing = () => {
     return () => clearTimeout(interval);
   }, []);
 
-  const [jobs, setJobs] = useState([]);
-  
-  useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        const res = await api.get('/jobs');
-        if (res.data.success) {
-          setJobs(res.data.jobs || []);
-        }
-      } catch (err) {
-        console.error("Failed to fetch jobs for landing page stats:", err);
-      }
-    };
-    fetchJobs();
-  }, []);
-
-  const activeJobsCount = jobs.length || 15;
-  const companiesCount = new Set(jobs.map(j => j.companyName).filter(Boolean)).size || 8;
-  const skillsCount = new Set(jobs.flatMap(j => j.requiredSkills || []).filter(Boolean)).size || 142;
-
-  // Stats Counters
-  const countJobs = useCountUp(activeJobsCount, 1.5);
-  const countCompanies = useCountUp(companiesCount, 1.5);
-  const countSkills = useCountUp(skillsCount, 1.5);
-  const countAccuracy = useCountUp(95, 1.5);
 
   return (
     <div className="bg-[#FAFAFA] min-h-screen selection:bg-brandPrimary/10 overflow-x-hidden">
@@ -222,18 +171,35 @@ export const Landing = () => {
             <a href="#problem" className="hover:text-brandPrimary transition-colors">The Solution</a>
           </nav>
           <div className="flex items-center gap-4">
-            <Link 
-              to="/login" 
-              className="text-sm font-semibold text-slate-700 hover:text-brandPrimary transition-colors px-4 py-2"
-            >
-              Sign In
-            </Link>
-            <Link 
-              to="/register" 
-              className="btn-primary text-sm font-semibold py-2 px-4 shadow-sm"
-            >
-              Get Started <ArrowRight className="h-4 w-4" />
-            </Link>
+            {token ? (
+              <Link 
+                to={
+                  user?.role === 'candidate' 
+                    ? '/candidate/dashboard' 
+                    : user?.role === 'recruiter' 
+                      ? '/recruiter/dashboard' 
+                      : '/admin/dashboard'
+                } 
+                className="btn-primary text-sm font-semibold py-2 px-4 shadow-sm"
+              >
+                Go to Dashboard <ArrowRight className="h-4 w-4" />
+              </Link>
+            ) : (
+              <>
+                <Link 
+                  to="/login" 
+                  className="text-sm font-semibold text-slate-700 hover:text-brandPrimary transition-colors px-4 py-2"
+                >
+                  Sign In
+                </Link>
+                <Link 
+                  to="/register" 
+                  className="btn-primary text-sm font-semibold py-2 px-4 shadow-sm"
+                >
+                  Get Started <ArrowRight className="h-4 w-4" />
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -281,9 +247,24 @@ export const Landing = () => {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="flex flex-wrap gap-4"
           >
-            <button onClick={() => navigate('/register')} className="btn-primary py-3 px-6 text-sm font-semibold">
-              Get Started
-            </button>
+            {token ? (
+              <button 
+                onClick={() => navigate(
+                  user?.role === 'candidate' 
+                    ? '/candidate/dashboard' 
+                    : user?.role === 'recruiter' 
+                      ? '/recruiter/dashboard' 
+                      : '/admin/dashboard'
+                )} 
+                className="btn-primary py-3 px-6 text-sm font-semibold"
+              >
+                Go to Dashboard
+              </button>
+            ) : (
+              <button onClick={() => navigate('/register')} className="btn-primary py-3 px-6 text-sm font-semibold">
+                Get Started
+              </button>
+            )}
           </motion.div>
         </div>
 
@@ -343,37 +324,6 @@ export const Landing = () => {
         </div>
       </section>
 
-      {/* 3. Real-Time Platform Statistics */}
-      <section className="bg-white border-y border-[#E5E7EB] py-10 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
-            <div>
-              <div className="text-4xl font-extrabold text-brandPrimary tracking-tight font-jakarta">
-                {countJobs}
-              </div>
-              <div className="text-xs text-slate-400 mt-1 font-semibold uppercase">Active Openings</div>
-            </div>
-            <div>
-              <div className="text-4xl font-extrabold text-brandPrimary tracking-tight font-jakarta">
-                {countAccuracy}%
-              </div>
-              <div className="text-xs text-slate-400 mt-1 font-semibold uppercase">AI Match Accuracy</div>
-            </div>
-            <div>
-              <div className="text-4xl font-extrabold text-brandPrimary tracking-tight font-jakarta">
-                {countSkills}
-              </div>
-              <div className="text-xs text-slate-400 mt-1 font-semibold uppercase">Skills Mapped</div>
-            </div>
-            <div>
-              <div className="text-4xl font-extrabold text-brandPrimary tracking-tight font-jakarta">
-                {countCompanies}
-              </div>
-              <div className="text-xs text-slate-400 mt-1 font-semibold uppercase">Hiring Organizations</div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* 4. The Problem vs Solution */}
       <section id="problem" className="py-24 px-6 max-w-7xl mx-auto space-y-16">
@@ -796,9 +746,24 @@ export const Landing = () => {
             Join thousands of modern recruiters mapping capabilities instead of reading raw resumes.
           </p>
           <div className="flex justify-center gap-4 flex-wrap pt-4">
-            <button onClick={() => navigate('/register')} className="btn-primary py-3 px-6 text-sm font-semibold">
-              Get Started for Free
-            </button>
+            {token ? (
+              <button 
+                onClick={() => navigate(
+                  user?.role === 'candidate' 
+                    ? '/candidate/dashboard' 
+                    : user?.role === 'recruiter' 
+                      ? '/recruiter/dashboard' 
+                      : '/admin/dashboard'
+                )} 
+                className="btn-primary py-3 px-6 text-sm font-semibold"
+              >
+                Go to Dashboard
+              </button>
+            ) : (
+              <button onClick={() => navigate('/register')} className="btn-primary py-3 px-6 text-sm font-semibold">
+                Get Started for Free
+              </button>
+            )}
           </div>
         </div>
       </section>
