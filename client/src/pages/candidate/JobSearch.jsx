@@ -99,7 +99,7 @@ const JobSearch = ({ defaultTab = 'search' }) => {
           className={`px-4 py-2.5 text-xs font-semibold border-b-2 transition-all ${
             activeTab === 'search'
               ? 'border-brandPrimary text-indigo-400'
-              : 'border-transparent text-textMuted hover:text-white'
+              : 'border-transparent text-textMuted hover:text-slate-900'
           }`}
         >
           Search Openings
@@ -109,7 +109,7 @@ const JobSearch = ({ defaultTab = 'search' }) => {
           className={`px-4 py-2.5 text-xs font-semibold border-b-2 transition-all ${
             activeTab === 'applications'
               ? 'border-brandPrimary text-indigo-400'
-              : 'border-transparent text-textMuted hover:text-white'
+              : 'border-transparent text-textMuted hover:text-slate-900'
           }`}
         >
           My Applications
@@ -211,7 +211,7 @@ const JobSearch = ({ defaultTab = 'search' }) => {
                       </span>
                       <span className="flex items-center space-x-1">
                         <DollarSign size={12} />
-                        <span>{job.salaryRange ? `$${job.salaryRange.min.toLocaleString()} - $${job.salaryRange.max.toLocaleString()}` : 'Negotiable'}</span>
+                        <span>{job.salaryRange ? `₹${job.salaryRange.min.toLocaleString('en-IN')} - ₹${job.salaryRange.max.toLocaleString('en-IN')}` : 'Negotiable'}</span>
                       </span>
                     </div>
                     <button

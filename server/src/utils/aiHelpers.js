@@ -61,18 +61,18 @@ const cleanJsonResponse = (text) => {
 // 1. AI Resume Parser
 exports.aiParseResume = async (resumeText) => {
   const fallbackData = {
-    name: "Alex Rivera",
-    email: "alex.rivera@example.com",
+    name: "Rohan Sharma",
+    email: "rohan.sharma@example.com",
     title: "Senior Full Stack Engineer",
-    location: "San Francisco, CA",
-    bio: "Passionate Full Stack Engineer with 5+ years of experience building high-performance web applications and cloud architectures.",
+    location: "Bengaluru, Karnataka",
+    bio: "Passionate Full Stack Engineer with 5+ years of experience building high-performance web applications and cloud architectures in Indian startups.",
     skills: ["React", "Node.js", "Express.js", "MongoDB", "JavaScript", "TypeScript", "AWS", "Docker", "Tailwind CSS"],
     experience: [
-      { company: "TechCorp Solutions", role: "Senior Software Engineer", startDate: "2023-01-01", current: true, description: "Led development of a high-traffic e-commerce microservice platform." },
-      { company: "WebFlow Agency", role: "Frontend Developer", startDate: "2020-03-01", endDate: "2022-12-31", current: false, description: "Built customized React and Vue dashboards for enterprise clients." }
+      { company: "TechCorp Solutions India", role: "Senior Software Engineer", startDate: "2023-01-01", current: true, description: "Led development of a high-traffic e-commerce microservice platform." },
+      { company: "WebFlow Agency Bengaluru", role: "Frontend Developer", startDate: "2020-03-01", endDate: "2022-12-31", current: false, description: "Built customized React and Vue dashboards for enterprise clients." }
     ],
     education: [
-      { institution: "State University", degree: "Bachelor of Science", fieldOfStudy: "Computer Science", grade: "GPA 3.8" }
+      { institution: "IIT Bombay", degree: "Bachelor of Technology", fieldOfStudy: "Computer Science", grade: "CGPA 9.2" }
     ],
     projects: [
       { title: "Realtime Analytics Dashboard", description: "A high-performance socket.io monitoring panel with visual canvas charts.", technologies: ["React", "Node.js", "Socket.io", "D3.js"] }

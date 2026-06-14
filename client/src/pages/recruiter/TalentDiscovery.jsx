@@ -65,7 +65,7 @@ const TalentDiscovery = () => {
       {/* Discovery List */}
       <div className="glass-panel border border-darkBorder rounded-2xl p-6 space-y-4">
         <div>
-          <h3 className="text-sm font-semibold text-gray-200">{activeInfo.label}</h3>
+          <h3 className="text-sm font-semibold text-slate-800">{activeInfo.label}</h3>
           <p className="text-[10px] text-textMuted mt-0.5">{activeInfo.desc}</p>
         </div>
 
@@ -73,7 +73,7 @@ const TalentDiscovery = () => {
           <p className="text-xs text-slate-500 py-6">No candidates cataloged under this criteria.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-xs text-left text-gray-300">
+            <table className="w-full text-xs text-left text-slate-600">
               <thead className="text-[10px] uppercase text-slate-500 font-bold border-b border-darkBorder/40">
                 <tr>
                   <th scope="col" className="py-3">Candidate</th>
@@ -93,7 +93,7 @@ const TalentDiscovery = () => {
                         <div className="w-8 h-8 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-indigo-400 font-bold">
                           <User size={14} />
                         </div>
-                        <span className="font-semibold text-gray-200">
+                        <span className="font-semibold text-slate-800">
                           {isBlindMode ? 'Anonymized Candidate' : uName}
                         </span>
                       </td>

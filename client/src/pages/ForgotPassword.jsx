@@ -33,7 +33,7 @@ const ForgotPassword = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-darkBg px-4 relative">
       <div className="w-full max-w-md glass-panel rounded-2xl p-8 border border-darkBorder">
-        <h2 className="text-xl font-bold text-white text-center mb-2">Forgot Password</h2>
+        <h2 className="text-xl font-bold text-slate-800 text-center mb-2">Forgot Password</h2>
         <p className="text-xs text-textMuted text-center mb-6">Enter your email and new password to reset it directly.</p>
 
         {error && (
@@ -52,7 +52,7 @@ const ForgotPassword = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-gray-300">Email Address</label>
+            <label className="text-xs font-semibold text-slate-700">Email Address</label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500">
                 <Mail size={16} />
@@ -69,7 +69,7 @@ const ForgotPassword = () => {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-gray-300">New Password</label>
+            <label className="text-xs font-semibold text-slate-700">New Password</label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500">
                 <Lock size={16} />

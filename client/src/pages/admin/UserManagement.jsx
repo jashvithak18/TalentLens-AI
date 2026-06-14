@@ -69,7 +69,7 @@ const UserManagement = () => {
       {/* Directory Table */}
       <div className="glass-panel border border-darkBorder rounded-2xl p-6">
         <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left text-gray-300">
+          <table className="w-full text-xs text-left text-slate-600">
             <thead className="text-[10px] uppercase text-slate-500 font-bold border-b border-darkBorder/40">
               <tr>
                 <th scope="col" className="py-3">Name</th>
@@ -82,13 +82,13 @@ const UserManagement = () => {
             <tbody>
               {users.map((u) => (
                 <tr key={u._id} className="border-b border-darkBorder/20 hover:bg-slate-900/10">
-                  <td className="py-3.5 font-bold text-gray-200">{u.name}</td>
+                  <td className="py-3.5 font-bold text-slate-800">{u.name}</td>
                   <td className="py-3.5 text-slate-400">{u.email}</td>
                   <td className="py-3.5">
                     <select
                       value={u.role}
                       onChange={(e) => handleRoleChange(u._id, e.target.value)}
-                      className="bg-slate-950 border border-darkBorder rounded px-2 py-1 text-[11px] text-gray-300 focus:outline-none"
+                      className="bg-white border border-darkBorder rounded px-2 py-1 text-[11px] text-slate-800 focus:outline-none"
                     >
                       <option value="candidate">Candidate</option>
                       <option value="recruiter">Recruiter</option>

@@ -63,10 +63,6 @@ const Sidebar = () => {
   return (
     <aside className="hidden md:flex w-64 bg-white border-r border-[#E5E7EB] flex-col justify-between h-screen fixed left-0 top-0 pt-16 z-30">
       <div className="px-4 py-6 flex-1 overflow-y-auto">
-        <div className="flex items-center space-x-3 mb-8 px-2">
-          <Logo showText={true} iconSize="h-8 w-8" textSize="text-lg" />
-        </div>
-
         {/* Navigation links */}
         <nav className="space-y-1">
           {links.map((link) => {

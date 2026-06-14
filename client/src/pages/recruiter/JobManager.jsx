@@ -103,7 +103,7 @@ const JobManager = () => {
                 <span className="text-[10px] text-textMuted font-mono">Min Exp: {job.experience} yrs</span>
               </div>
 
-              <h3 className="text-sm font-bold text-gray-100 mt-3">{job.title}</h3>
+              <h3 className="text-sm font-bold text-slate-800 mt-3">{job.title}</h3>
               <p className="text-xs text-textMuted mt-1.5 line-clamp-2 leading-relaxed">{job.description}</p>
             </div>
 
@@ -115,7 +115,7 @@ const JobManager = () => {
                 </span>
                 <span className="flex items-center space-x-1">
                   <DollarSign size={12} />
-                  <span>{job.salaryRange ? `$${(job.salaryRange.min/1000)}k - $${(job.salaryRange.max/1000)}k` : 'Negotiable'}</span>
+                  <span>{job.salaryRange ? `₹${(job.salaryRange.min/100000)} LPA - ₹${(job.salaryRange.max/100000)} LPA` : 'Negotiable'}</span>
                 </span>
               </div>
 
@@ -139,24 +139,24 @@ const JobManager = () => {
             className="w-full max-w-xl bg-darkCard border border-darkBorder rounded-2xl p-6 space-y-4 my-8"
           >
             <div>
-              <h3 className="text-sm font-bold text-gray-100">Publish New Job Listing</h3>
+              <h3 className="text-sm font-bold text-slate-800">Publish New Job Listing</h3>
               <p className="text-xs text-textMuted mt-0.5">Publish role requirements and calibration profiles</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold text-gray-300">Job Title</label>
+                <label className="text-[10px] font-semibold text-slate-700">Job Title</label>
                 <input type="text" name="title" required placeholder="e.g. Senior MERN Developer" className="custom-input text-xs" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold text-gray-300">Location</label>
-                <input type="text" name="location" required placeholder="e.g. Remote, US" className="custom-input text-xs" />
+                <label className="text-[10px] font-semibold text-slate-700">Location</label>
+                <input type="text" name="location" required placeholder="e.g. Remote, India" className="custom-input text-xs" />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold text-gray-300">Employment Type</label>
+                <label className="text-[10px] font-semibold text-slate-700">Employment Type</label>
                 <select name="employmentType" className="custom-input text-xs">
                   <option value="full-time">Full Time</option>
                   <option value="part-time">Part Time</option>
@@ -165,34 +165,34 @@ const JobManager = () => {
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold text-gray-300">Minimum Experience (Years)</label>
+                <label className="text-[10px] font-semibold text-slate-700">Minimum Experience (Years)</label>
                 <input type="number" name="experience" min="0" required placeholder="e.g. 3" className="custom-input text-xs" />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold text-gray-300">Minimum Salary ($)</label>
-                <input type="number" name="minSalary" required placeholder="80000" className="custom-input text-xs" />
+                <label className="text-[10px] font-semibold text-slate-700">Minimum Salary (₹ Per Annum)</label>
+                <input type="number" name="minSalary" required placeholder="1200000" className="custom-input text-xs" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold text-gray-300">Maximum Salary ($)</label>
-                <input type="number" name="maxSalary" required placeholder="120000" className="custom-input text-xs" />
+                <label className="text-[10px] font-semibold text-slate-700">Maximum Salary (₹ Per Annum)</label>
+                <input type="number" name="maxSalary" required placeholder="2000000" className="custom-input text-xs" />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-semibold text-gray-300">Required Skills (Comma-separated)</label>
+              <label className="text-[10px] font-semibold text-slate-700">Required Skills (Comma-separated)</label>
               <input type="text" name="requiredSkills" required placeholder="React, Node.js, Express" className="custom-input text-xs" />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-semibold text-gray-300">Preferred Skills (Comma-separated)</label>
+              <label className="text-[10px] font-semibold text-slate-700">Preferred Skills (Comma-separated)</label>
               <input type="text" name="preferredSkills" placeholder="AWS, TypeScript, Docker" className="custom-input text-xs" />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-semibold text-gray-300">Job Description</label>
+              <label className="text-[10px] font-semibold text-slate-700">Job Description</label>
               <textarea name="description" rows={4} required placeholder="Detailed role requirements..." className="custom-input text-xs" />
             </div>
 

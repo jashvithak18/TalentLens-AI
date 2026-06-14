@@ -244,7 +244,7 @@ const AIRankingDashboard = () => {
               { key: 'behavioralFit', label: 'Behavioral Signals' }
             ].map((s) => (
               <div key={s.key} className="space-y-1">
-                <div className="flex justify-between text-[11px] font-medium text-gray-300">
+                <div className="flex justify-between text-[11px] font-medium text-slate-700">
                   <span>{s.label}</span>
                   <span className="font-semibold text-indigo-400">{weights[s.key]}%</span>
                 </div>
@@ -266,7 +266,7 @@ const AIRankingDashboard = () => {
           {!rankLoading && rankings.length > 0 && (
             <div className="glass-panel border border-darkBorder rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-200">Quantified Candidates</h3>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">Quantified Candidates</h3>
                 <p className="text-[10px] text-textMuted mt-0.5">Dynamically sorted shortlist</p>
               </div>
               <div className="flex items-center space-x-2 w-full sm:w-auto">
@@ -315,7 +315,7 @@ const AIRankingDashboard = () => {
                       </div>
                       <div>
                         {/* Blind Hiring Rendering Switch */}
-                        <h3 className="text-xs font-bold text-gray-200">
+                        <h3 className="text-xs font-bold text-slate-800">
                           {isBlindMode ? 'Anonymized Candidate' : rank.candidate?.name}
                         </h3>
                         <p className="text-[10px] text-textMuted mt-0.5">
@@ -415,7 +415,7 @@ const AIRankingDashboard = () => {
           <div className="w-full max-w-3xl bg-darkCard border border-darkBorder rounded-2xl p-6 relative my-8">
             <button
               onClick={() => setShowBattleModal(false)}
-              className="absolute top-4 right-4 text-slate-500 hover:text-white"
+              className="absolute top-4 right-4 text-slate-500 hover:text-slate-900 transition-colors"
             >
               <X size={18} />
             </button>
@@ -424,7 +424,7 @@ const AIRankingDashboard = () => {
               <div className="w-10 h-10 rounded-lg bg-indigo-600 flex items-center justify-center mx-auto mb-3">
                 <Sword size={20} className="text-white" />
               </div>
-              <h3 className="text-sm font-bold text-gray-100 uppercase tracking-wider">Candidate Comparison Battle</h3>
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Candidate Comparison Battle</h3>
               <p className="text-[10px] text-textMuted mt-1">Side by side DNA, potential, and AI recommendation scorecard</p>
             </div>
 

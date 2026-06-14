@@ -34,19 +34,9 @@ const Navbar = () => {
 
   return (
     <header className="h-16 bg-white border-b border-[#E5E7EB] fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-6">
-      {/* Brand logo (visible on mobile where sidebar is hidden) */}
-      <div className="flex items-center space-x-3 md:hidden">
+      {/* Brand logo (visible always in header) */}
+      <div className="flex items-center space-x-3">
         <Logo showText={true} iconSize="h-7 w-7" textSize="text-md" />
-      </div>
-
-      {/* Global Search Bar (Placeholders/Search) */}
-      <div className="hidden md:flex items-center space-x-2 bg-slate-50 border border-[#E5E7EB] rounded-lg px-3 py-1.5 w-80">
-        <Search size={16} className="text-slate-400" />
-        <input
-          type="text"
-          placeholder="Search everywhere..."
-          className="bg-transparent border-none text-xs text-slate-800 focus:outline-none placeholder-slate-400 w-full"
-        />
       </div>
 
       {/* User Actions */}
