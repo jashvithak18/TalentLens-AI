@@ -115,14 +115,14 @@ const CodeChallenge = () => {
       <div className="glass-panel border border-darkBorder rounded-xl p-5 flex flex-col justify-between overflow-y-auto space-y-4">
         <div className="space-y-4">
           <div className="flex justify-between items-center pb-2 border-b border-darkBorder/40">
-            <h3 className="text-xs font-bold text-gray-100 uppercase tracking-wider">{problem?.title}</h3>
+            <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">{problem?.title}</h3>
             <div className="flex items-center space-x-2 text-rose-400 font-mono text-xs font-bold">
               <Clock size={12} />
               <span>{formatTime(timeLeft)}</span>
             </div>
           </div>
 
-          <div className="text-xs text-gray-300 leading-relaxed whitespace-pre-wrap font-sans">
+          <div className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap font-sans">
             {problem?.description}
           </div>
         </div>

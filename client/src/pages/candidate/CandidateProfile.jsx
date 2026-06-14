@@ -14,6 +14,15 @@ import {
   AlertCircle
 } from 'lucide-react';
 
+const getResumeUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  const apiBase = import.meta.env.VITE_API_URL || 'https://talentlens-ai-e57l.onrender.com/api';
+  const serverUrl = apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase;
+  const normalizedUrl = url.startsWith('/') ? url : `/${url}`;
+  return `${serverUrl}${normalizedUrl}`;
+};
+
 const CandidateProfile = () => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('general');
@@ -157,8 +166,8 @@ const CandidateProfile = () => {
   if (isLoading) {
     return (
       <div className="space-y-6 animate-pulse">
-        <div className="h-10 bg-slate-800 rounded w-1/3" />
-        <div className="h-64 bg-slate-800 rounded-xl" />
+        <div className="h-10 bg-slate-200 rounded w-1/3" />
+        <div className="h-64 bg-slate-200 rounded-xl" />
       </div>
     );
   }
@@ -255,8 +264,8 @@ const CandidateProfile = () => {
               onClick={() => setActiveTab(t.id)}
               className={`flex items-center space-x-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-all ${
                 activeTab === t.id
-                  ? 'border-brandPrimary text-indigo-400'
-                  : 'border-transparent text-textMuted hover:text-white'
+                  ? 'border-brandPrimary text-brandPrimary'
+                  : 'border-transparent text-textMuted hover:text-brandPrimary'
               }`}
             >
               <Icon size={14} />
@@ -272,7 +281,7 @@ const CandidateProfile = () => {
           <form onSubmit={handleGeneralSubmit} className="space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-gray-300">Professional Title</label>
+                <label className="text-xs font-semibold text-slate-700">Professional Title</label>
                 <input
                   type="text"
                   name="title"
@@ -282,7 +291,7 @@ const CandidateProfile = () => {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-gray-300">Location</label>
+                <label className="text-xs font-semibold text-slate-700">Location</label>
                 <input
                   type="text"
                   name="location"
@@ -294,7 +303,7 @@ const CandidateProfile = () => {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-gray-300">Bio / Summary</label>
+              <label className="text-xs font-semibold text-slate-700">Bio / Summary</label>
               <textarea
                 name="bio"
                 rows={3}
@@ -305,20 +314,20 @@ const CandidateProfile = () => {
             </div>
 
             <div className="space-y-1.5" ref={dropdownRef}>
-              <label className="text-xs font-semibold text-gray-300">Skills</label>
+              <label className="text-xs font-semibold text-slate-700">Skills</label>
               
               {/* Selected Skills Badges */}
               <div className="flex flex-wrap gap-1.5 mb-2">
                 {selectedSkills.map((skill, index) => (
                   <div 
                     key={index} 
-                    className="flex items-center bg-indigo-950/40 border border-indigo-500/30 text-indigo-300 text-xs px-2.5 py-1 rounded-full space-x-1.5"
+                    className="flex items-center bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs px-2.5 py-1 rounded-full space-x-1.5"
                   >
                     <span>{skill}</span>
                     <button 
                       type="button" 
                       onClick={() => handleRemoveSkill(skill)}
-                      className="text-indigo-400 hover:text-indigo-200 focus:outline-none font-bold text-[10px] cursor-pointer"
+                      className="text-indigo-500 hover:text-indigo-750 focus:outline-none font-bold text-[10px] cursor-pointer"
                     >
                       ✕
                     </button>
@@ -344,13 +353,13 @@ const CandidateProfile = () => {
                 />
                 
                 {showDropdown && skillInput.trim() !== '' && (
-                  <div className="absolute z-50 w-full mt-1 bg-slate-900 border border-darkBorder rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-48 overflow-y-auto">
                     {filteredSkills.map((skill, index) => (
                       <button
                         key={index}
                         type="button"
                         onClick={() => handleAddSkill(skill)}
-                        className="w-full text-left px-4 py-2 text-xs text-gray-300 hover:bg-indigo-900/30 hover:text-white transition-colors"
+                        className="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
                       >
                         {skill}
                       </button>
@@ -361,7 +370,7 @@ const CandidateProfile = () => {
                       <button
                         type="button"
                         onClick={() => handleAddSkill(skillInput.trim())}
-                        className="w-full text-left px-4 py-2 text-xs text-indigo-400 font-semibold hover:bg-indigo-900/30 hover:text-indigo-300 transition-colors border-t border-darkBorder"
+                        className="w-full text-left px-4 py-2 text-xs text-indigo-600 font-semibold hover:bg-indigo-50 hover:text-indigo-850 transition-colors border-t border-slate-100"
                       >
                         + Add "{skillInput.trim()}" as a new skill
                       </button>
@@ -386,14 +395,14 @@ const CandidateProfile = () => {
                 onChange={handleResumeUpload}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               />
-              <Upload size={36} className="text-indigo-400 mx-auto mb-4" />
-              <p className="text-xs font-semibold text-gray-100">Upload PDF or DOCX resume</p>
+              <Upload size={36} className="text-indigo-600 mx-auto mb-4" />
+              <p className="text-xs font-semibold text-slate-800">Upload PDF or DOCX resume</p>
               <p className="text-[10px] text-textMuted mt-1">Our AI will automatically parse skills, projects, and work history.</p>
             </div>
 
             {uploadResumeMutation.isPending && (
               <div className="space-y-2 max-w-sm mx-auto">
-                <div className="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+                <div className="w-full bg-slate-200 h-1 rounded-full overflow-hidden">
                   <div className="bg-indigo-600 h-1 rounded-full animate-pulse w-2/3" />
                 </div>
                 <p className="text-[10px] text-textMuted">Running semantic parser, hidden skill indexer...</p>
@@ -401,19 +410,19 @@ const CandidateProfile = () => {
             )}
 
             {profile.resumeUrl && (
-              <div className="bg-slate-900/60 border border-darkBorder rounded-lg p-4 flex items-center justify-between max-w-md mx-auto">
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 flex items-center justify-between max-w-md mx-auto">
                 <div className="flex items-center space-x-3 text-left">
-                  <FileText className="text-indigo-400" size={20} />
+                  <FileText className="text-indigo-600" size={20} />
                   <div>
-                    <p className="text-xs font-semibold text-gray-200">Current Resume</p>
+                    <p className="text-xs font-semibold text-slate-800">Current Resume</p>
                     <span className="text-[10px] text-textMuted">Parsing confidence: {profile.resumeParsingConfidence}%</span>
                   </div>
                 </div>
                 <a
-                  href={profile.resumeUrl}
+                  href={getResumeUrl(profile.resumeUrl)}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold"
+                  className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold"
                 >
                   View File
                 </a>
@@ -425,31 +434,31 @@ const CandidateProfile = () => {
         {activeTab === 'experience' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <form onSubmit={handleAddExperience} className="lg:col-span-1 space-y-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-400">Add Experience</h3>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-600">Add Experience</h3>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold text-gray-300">Company</label>
+                <label className="text-[10px] font-semibold text-slate-700">Company</label>
                 <input type="text" name="company" required className="custom-input text-xs" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold text-gray-300">Role</label>
+                <label className="text-[10px] font-semibold text-slate-700">Role</label>
                 <input type="text" name="role" required className="custom-input text-xs" />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-semibold text-gray-300">Start Date</label>
+                  <label className="text-[10px] font-semibold text-slate-700">Start Date</label>
                   <input type="date" name="startDate" required className="custom-input text-xs" />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-semibold text-gray-300">End Date</label>
+                  <label className="text-[10px] font-semibold text-slate-700">End Date</label>
                   <input type="date" name="endDate" className="custom-input text-xs" />
                 </div>
               </div>
               <div className="flex items-center space-x-2">
                 <input type="checkbox" name="current" id="curr" />
-                <label htmlFor="curr" className="text-[10px] text-textMuted font-semibold">I currently work here</label>
+                <label htmlFor="curr" className="text-[10px] text-slate-650 font-semibold">I currently work here</label>
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold text-gray-300">Description</label>
+                <label className="text-[10px] font-semibold text-slate-700">Description</label>
                 <textarea name="description" rows={3} className="custom-input text-xs" />
               </div>
               <button type="submit" className="w-full btn-primary text-xs font-semibold py-2">
@@ -458,23 +467,23 @@ const CandidateProfile = () => {
             </form>
 
             <div className="lg:col-span-2 space-y-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-gray-200">Work Timeline</h3>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">Work Timeline</h3>
               {profile.experience?.length === 0 ? (
                 <p className="text-xs text-slate-500">No work experience entries yet.</p>
               ) : (
                 <div className="space-y-3">
                   {profile.experience?.map((exp, idx) => (
-                    <div key={idx} className="bg-slate-900/40 border border-darkBorder rounded-lg p-3.5 relative">
+                    <div key={idx} className="bg-slate-50 border border-slate-200 rounded-lg p-3.5 relative">
                       <div className="flex justify-between items-start">
                         <div>
-                          <p className="text-xs font-bold text-gray-200">{exp.role}</p>
-                          <p className="text-[10px] text-indigo-400 mt-0.5">{exp.company}</p>
-                          <span className="text-[9px] text-slate-500">
+                          <p className="text-xs font-bold text-slate-800">{exp.role}</p>
+                          <p className="text-[10px] text-indigo-600 mt-0.5">{exp.company}</p>
+                          <span className="text-[9px] text-slate-550">
                             {new Date(exp.startDate).toLocaleDateString()} - {exp.current ? 'Present' : new Date(exp.endDate).toLocaleDateString()}
                           </span>
                         </div>
                       </div>
-                      <p className="text-[11px] text-textMuted mt-2 leading-relaxed">{exp.description}</p>
+                      <p className="text-[11px] text-slate-600 mt-2 leading-relaxed">{exp.description}</p>
                     </div>
                   ))}
                 </div>
@@ -486,21 +495,21 @@ const CandidateProfile = () => {
         {activeTab === 'projects' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <form onSubmit={handleAddProject} className="lg:col-span-1 space-y-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-400">Add Project</h3>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-600">Add Project</h3>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold text-gray-300">Project Title</label>
+                <label className="text-[10px] font-semibold text-slate-700">Project Title</label>
                 <input type="text" name="title" required className="custom-input text-xs" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold text-gray-300">Technologies (Comma-separated)</label>
+                <label className="text-[10px] font-semibold text-slate-700">Technologies (Comma-separated)</label>
                 <input type="text" name="technologies" required placeholder="React, Node.js" className="custom-input text-xs" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold text-gray-300">GitHub Link</label>
+                <label className="text-[10px] font-semibold text-slate-700">GitHub Link</label>
                 <input type="url" name="githubLink" placeholder="https://github.com/..." className="custom-input text-xs" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold text-gray-300">Description</label>
+                <label className="text-[10px] font-semibold text-slate-700">Description</label>
                 <textarea name="description" rows={3} className="custom-input text-xs" />
               </div>
               <button type="submit" className="w-full btn-primary text-xs font-semibold py-2">
@@ -509,18 +518,18 @@ const CandidateProfile = () => {
             </form>
 
             <div className="lg:col-span-2 space-y-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-gray-200">Projects Portfolio</h3>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">Projects Portfolio</h3>
               {profile.projects?.length === 0 ? (
                 <p className="text-xs text-slate-500">No project entries yet.</p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {profile.projects?.map((proj, idx) => (
-                    <div key={idx} className="bg-slate-900/40 border border-darkBorder rounded-lg p-3.5">
-                      <p className="text-xs font-bold text-gray-200">{proj.title}</p>
-                      <p className="text-[11px] text-textMuted mt-1.5 line-clamp-2">{proj.description}</p>
+                    <div key={idx} className="bg-slate-50 border border-slate-200 rounded-lg p-3.5">
+                      <p className="text-xs font-bold text-slate-800">{proj.title}</p>
+                      <p className="text-[11px] text-slate-600 mt-1.5 line-clamp-2">{proj.description}</p>
                       <div className="flex flex-wrap gap-1 mt-3">
                         {proj.technologies?.map((tech, tIdx) => (
-                          <span key={tIdx} className="px-1.5 py-0.5 bg-slate-900 text-[9px] text-indigo-400 rounded">
+                          <span key={tIdx} className="px-1.5 py-0.5 bg-indigo-50 border border-indigo-100 text-[9px] text-indigo-700 rounded font-medium">
                             {tech}
                           </span>
                         ))}

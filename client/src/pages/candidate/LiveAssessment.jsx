@@ -103,7 +103,7 @@ const LiveAssessment = () => {
       {/* Timer Bar */}
       <div className="glass-panel border border-darkBorder rounded-xl p-4 flex justify-between items-center sticky top-16 z-10">
         <div>
-          <h3 className="text-xs font-bold text-gray-100">{assessment?.title}</h3>
+          <h3 className="text-xs font-bold text-slate-800">{assessment?.title}</h3>
           <p className="text-[10px] text-textMuted mt-0.5">{questions.length} questions</p>
         </div>
         <div className="flex items-center space-x-2 bg-rose-950/20 text-rose-400 px-3.5 py-1.5 rounded-lg border border-rose-500/20 text-xs font-bold font-mono">
@@ -120,7 +120,7 @@ const LiveAssessment = () => {
             <span className="capitalize">{currentQuestion.difficulty}</span>
           </div>
 
-          <p className="text-sm font-semibold text-gray-100 leading-relaxed">{currentQuestion.text}</p>
+          <p className="text-sm font-semibold text-slate-805 leading-relaxed">{currentQuestion.text}</p>
 
           <div className="space-y-2">
             {currentQuestion.options.map((opt, idx) => (
@@ -130,8 +130,8 @@ const LiveAssessment = () => {
                 onClick={() => handleSelectOption(currentQuestion._id, idx)}
                 className={`w-full text-left px-4 py-3 rounded-lg text-xs transition-all border ${
                   selectedAnswers[currentQuestion._id] === idx
-                    ? 'bg-indigo-600/15 border-indigo-600 text-indigo-400 font-semibold'
-                    : 'bg-slate-900/40 border-darkBorder text-gray-300 hover:bg-slate-900/80 hover:text-white'
+                    ? 'bg-indigo-50 border-indigo-600 text-indigo-700 font-semibold'
+                    : 'bg-white border-darkBorder text-slate-700 hover:bg-slate-50 hover:text-slate-900'
                 }`}
               >
                 {opt}

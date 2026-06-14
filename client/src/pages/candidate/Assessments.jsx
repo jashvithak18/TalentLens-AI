@@ -19,10 +19,10 @@ const Assessments = () => {
   if (isLoading) {
     return (
       <div className="space-y-6 animate-pulse">
-        <div className="h-10 bg-slate-800 rounded w-1/4" />
+        <div className="h-10 bg-slate-200 rounded w-1/4" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="h-40 bg-slate-800 rounded-xl" />
-          <div className="h-40 bg-slate-800 rounded-xl" />
+          <div className="h-40 bg-slate-200 rounded-xl" />
+          <div className="h-40 bg-slate-200 rounded-xl" />
         </div>
       </div>
     );
@@ -45,7 +45,7 @@ const Assessments = () => {
             >
               <div>
                 <div className="flex justify-between items-start">
-                  <span className="px-2 py-0.5 bg-slate-900 border border-slate-800 text-[10px] font-bold rounded text-indigo-400 uppercase">
+                  <span className="px-2 py-0.5 bg-indigo-50 border border-indigo-100 text-[10px] font-bold rounded text-indigo-700 uppercase">
                     {test.category} ({test.type})
                   </span>
                   <div className="flex items-center space-x-1 text-[10px] text-textMuted font-semibold">
@@ -54,7 +54,7 @@ const Assessments = () => {
                   </div>
                 </div>
 
-                <h3 className="text-sm font-bold text-gray-100 mt-3">{test.title}</h3>
+                <h3 className="text-sm font-bold text-slate-800 mt-3">{test.title}</h3>
                 <p className="text-xs text-textMuted mt-1 leading-relaxed">{test.description}</p>
               </div>
 
