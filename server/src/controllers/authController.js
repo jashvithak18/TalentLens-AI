@@ -46,6 +46,11 @@ exports.register = async (req, res, next) => {
     const verifyUrl = `${req.protocol}://${req.get('host')}/api/auth/verify-email/${verificationToken}`;
     const message = `Please verify your email by clicking: \n\n ${verifyUrl}`;
 
+    console.log('--- VERIFICATION LINK BACKUP ---');
+    console.log(`Email: ${user.email}`);
+    console.log(`URL: ${verifyUrl}`);
+    console.log('--------------------------------');
+
     try {
       await sendEmail({
         email: user.email,
@@ -54,7 +59,7 @@ exports.register = async (req, res, next) => {
         html: `<p>Please verify your email by clicking the link below:</p><a href="${verifyUrl}">${verifyUrl}</a>`
       });
     } catch (err) {
-      console.error('Email could not be sent:', err);
+      console.error('Email could not be sent via SMTP:', err.message);
     }
 
     res.status(201).json({
