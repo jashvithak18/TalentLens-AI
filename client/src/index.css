@@ -14,6 +14,35 @@
   }
 }
 
+/* Custom component classes placed in the components layer so utilities (like pl-10) take precedence */
+@layer components {
+  .custom-input {
+    @apply w-full bg-white border border-darkBorder rounded-lg px-4 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brandPrimary focus:ring-1 focus:ring-brandPrimary transition-all duration-200 shadow-sm;
+  }
+
+  .btn-primary {
+    @apply px-4 py-2 bg-brandPrimary hover:bg-brandDark text-white font-medium rounded-lg transition-all duration-200 shadow-md shadow-brandPrimary/10 active:scale-95 flex items-center justify-center gap-2;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 font-medium rounded-lg transition-all duration-200 border border-darkBorder active:scale-95 shadow-sm flex items-center justify-center gap-2;
+  }
+
+  .btn-accent {
+    @apply px-4 py-2 bg-brandAccent hover:bg-emerald-600 text-white font-medium rounded-lg transition-all duration-200 shadow-md shadow-brandAccent/10 active:scale-95 flex items-center justify-center gap-2;
+  }
+
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .glow-card {
+    box-shadow: 0 4px 20px -2px rgba(79, 70, 229, 0.05);
+  }
+}
+
 /* Custom premium scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
@@ -28,33 +57,6 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #4F46E5;
-}
-
-/* Custom premium styles */
-.glass-panel {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.custom-input {
-  @apply w-full bg-white border border-darkBorder rounded-lg px-4 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brandPrimary focus:ring-1 focus:ring-brandPrimary transition-all duration-200 shadow-sm;
-}
-
-.btn-primary {
-  @apply px-4 py-2 bg-brandPrimary hover:bg-brandDark text-white font-medium rounded-lg transition-all duration-200 shadow-md shadow-brandPrimary/10 active:scale-95 flex items-center justify-center gap-2;
-}
-
-.btn-secondary {
-  @apply px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 font-medium rounded-lg transition-all duration-200 border border-darkBorder active:scale-95 shadow-sm flex items-center justify-center gap-2;
-}
-
-.btn-accent {
-  @apply px-4 py-2 bg-brandAccent hover:bg-emerald-600 text-white font-medium rounded-lg transition-all duration-200 shadow-md shadow-brandAccent/10 active:scale-95 flex items-center justify-center gap-2;
-}
-
-.glow-card {
-  box-shadow: 0 4px 20px -2px rgba(79, 70, 229, 0.05);
 }
 
 /* Custom animations */
