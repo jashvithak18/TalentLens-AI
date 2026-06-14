@@ -2,6 +2,7 @@ const express = require('express');
 const {
   register,
   login,
+  googleLogin,
   refresh,
   verifyEmail,
   forgotPassword,
@@ -15,6 +16,7 @@ const router = express.Router();
 
 router.post('/register', authLimiter, register);
 router.post('/login', authLimiter, login);
+router.post('/google-login', googleLogin);
 router.post('/refresh', refresh);
 router.get('/verify-email/:token', verifyEmail);
 router.post('/forgot-password', forgotPassword);

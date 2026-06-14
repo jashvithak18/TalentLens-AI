@@ -64,5 +64,6 @@ export default api;
 export const authAPI = {
   login: (data) => api.post('/auth/login', data),
   register: (data) => api.post('/auth/register', data),
+  googleLogin: (data) => api.post('/auth/google-login', data),
   logout: () => api.post('/auth/logout'),
 };

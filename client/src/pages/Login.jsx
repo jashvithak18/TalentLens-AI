@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { setCredentials } from '../redux/authSlice';
@@ -44,6 +44,50 @@ const Login = () => {
       setLoading(false);
     }
   };
+
+  const handleGoogleCredentialResponse = async (response) => {
+    setError('');
+    setLoading(true);
+
+    try {
+      const res = await authAPI.googleLogin({ credential: response.credential });
+      if (res.data.success) {
+        localStorage.setItem('refreshToken', res.data.refreshToken);
+        dispatch(setCredentials({
+          user: res.data.user,
+          token: res.data.token,
+          profile: res.data.profile
+        }));
+
+        if (res.data.user.role === 'candidate') {
+          navigate('/candidate/dashboard');
+        } else if (res.data.user.role === 'recruiter') {
+          navigate('/recruiter/dashboard');
+        } else {
+          navigate('/admin/dashboard');
+        }
+      }
+    } catch (err) {
+      setError(err.response?.data?.error || 'Google Authentication failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    /* global google */
+    if (typeof window !== 'undefined' && window.google) {
+      window.google.accounts.id.initialize({
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || "1008719970978-hb24n2dstb40o45d4feuo2ktjycgg6qf.apps.googleusercontent.com",
+        callback: handleGoogleCredentialResponse
+      });
+
+      window.google.accounts.id.renderButton(
+        document.getElementById("google-signin-btn"),
+        { theme: "outline", size: "large", width: 384, text: "continue_with" }
+      );
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -159,19 +203,21 @@ const Login = () => {
           </span>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setShowGooglePicker(true)}
-          className="w-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 rounded-xl py-2.5 px-4 text-sm font-semibold flex items-center justify-center space-x-2.5 shadow-sm transition-all"
-        >
-          <svg className="h-4 w-4" viewBox="0 0 24 24">
-            <path
-              fill="#EA4335"
-              d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.114-5.136 4.114-3.472 0-6.29-2.818-6.29-6.29 0-3.472 2.818-6.29 6.29-6.29 1.516 0 2.895.539 3.972 1.436l3.141-3.14C19.043 1.956 15.897 1 12.24 1 6.046 1 1 6.046 1 12.24s5.046 11.24 11.24 11.24c6.452 0 11.396-4.527 11.396-11.396 0-.756-.08-1.32-.23-1.8H12.24z"
-            />
-          </svg>
-          <span>Sign In with Google</span>
-        </button>
+        {/* Real Google Sign-In Button */}
+        <div className="flex justify-center w-full mb-3">
+          <div id="google-signin-btn" className="w-full flex justify-center"></div>
+        </div>
+
+        {/* Try Demo Accounts Fallback Link */}
+        <div className="text-center w-full">
+          <button
+            type="button"
+            onClick={() => setShowGooglePicker(true)}
+            className="text-xs text-brandPrimary hover:underline font-bold"
+          >
+            Or use offline/demo account credentials
+          </button>
+        </div>
 
         <div className="mt-6 text-center border-t border-[#E5E7EB] pt-4">
           <p className="text-xs text-textMuted font-semibold">

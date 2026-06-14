@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const axios = require('axios');
 const User = require('../models/User');
 const CandidateProfile = require('../models/CandidateProfile');
 const RecruiterProfile = require('../models/RecruiterProfile');
@@ -248,5 +249,77 @@ exports.logout = async (req, res, next) => {
     res.status(200).json({ success: true, message: 'Logged out successfully' });
   } catch (error) {
     next(error);
+  }
+};
+
+// @desc    Google Sign In (OAuth verification)
+// @route   POST /api/auth/google-login
+// @access  Public
+exports.googleLogin = async (req, res, next) => {
+  const { credential } = req.body;
+
+  try {
+    if (!credential) {
+      return res.status(400).json({ success: false, error: 'Credential token is required' });
+    }
+
+    // Verify token using Google OAuth API
+    const googleRes = await axios.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
+    
+    if (googleRes.status !== 200) {
+      return res.status(400).json({ success: false, error: 'Google authentication failed' });
+    }
+
+    const { email, name } = googleRes.data;
+
+    // Check if user exists
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // Create user on the fly if they don't exist
+      user = await User.create({
+        name,
+        email,
+        password: crypto.randomBytes(16).toString('hex'),
+        role: 'candidate', // Default to candidate
+        isVerified: true
+      });
+
+      // Create profile for candidate
+      await CandidateProfile.create({ user: user._id });
+    }
+
+    // Generate tokens
+    const token = generateToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
+
+    // Save refresh token to user model
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    // Get profile details
+    let profile = null;
+    if (user.role === 'candidate') {
+      profile = await CandidateProfile.findOne({ user: user._id });
+    } else if (user.role === 'recruiter') {
+      profile = await RecruiterProfile.findOne({ user: user._id });
+    }
+
+    res.status(200).json({
+      success: true,
+      token,
+      refreshToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isVerified: user.isVerified
+      },
+      profile
+    });
+  } catch (error) {
+    console.error('Google login error:', error.message);
+    res.status(400).json({ success: false, error: 'Google token verification failed' });
   }
 };
