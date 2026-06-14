@@ -17,7 +17,8 @@ const app = express();
 
 // Security Middlewares
 app.use(helmet({
-  crossOriginResourcePolicy: false // Allows loading local uploaded files in dev
+  crossOriginResourcePolicy: false, // Allows loading local uploaded files in dev
+  crossOriginOpenerPolicy: false    // Allow Google OAuth popups to communicate back to the app
 }));
 
 // Allow all origins dynamically to prevent CORS preflight blockages on Vercel/Render
