@@ -45,28 +45,28 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-darkBg px-4 relative overflow-hidden">
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-[120px]" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-600/10 rounded-full blur-[120px]" />
+    <div className="min-h-screen flex items-center justify-center bg-darkBg px-4 relative overflow-hidden grid-bg">
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-brandPrimary/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-brandSecondary/5 rounded-full blur-[120px] pointer-events-none" />
 
-      <div className="w-full max-w-md glass-panel rounded-2xl p-8 border border-darkBorder glow-card relative z-10">
-        <div className="text-center mb-6">
-          <div className="w-12 h-12 rounded-xl bg-indigo-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-600/30">
-            <Shield className="text-white" size={24} />
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Create your account</h1>
-          <p className="text-xs text-textMuted mt-1.5">Discover Talent Beyond Keywords</p>
+      <div className="w-full max-w-md bg-white border border-[#E5E7EB] rounded-2xl p-8 shadow-card relative z-10">
+        <div className="text-center mb-6 flex flex-col items-center">
+          <RouterLink to="/" className="mb-6">
+            <Logo showText={true} iconSize="h-10 w-10" textSize="text-2xl" />
+          </RouterLink>
+          <h1 className="text-xl font-extrabold tracking-tight text-slate-900 font-jakarta">Create Your Account</h1>
+          <p className="text-xs text-textMuted mt-1.5 font-semibold">Discover Talent Beyond Keywords</p>
         </div>
 
         {/* Role Selector */}
-        <div className="grid grid-cols-2 gap-2 p-1 bg-slate-900/80 border border-darkBorder rounded-lg mb-6">
+        <div className="grid grid-cols-2 gap-2 p-1 bg-slate-50 border border-[#E5E7EB] rounded-lg mb-6">
           <button
             type="button"
             onClick={() => setRole('candidate')}
-            className={`py-1.5 text-xs font-semibold rounded-md transition-all ${
+            className={`py-1.5 text-xs font-bold rounded-md transition-all ${
               role === 'candidate'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-textMuted hover:text-white'
+                ? 'bg-brandPrimary text-white shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
             }`}
           >
             Candidate
@@ -74,10 +74,10 @@ const Register = () => {
           <button
             type="button"
             onClick={() => setRole('recruiter')}
-            className={`py-1.5 text-xs font-semibold rounded-md transition-all ${
+            className={`py-1.5 text-xs font-bold rounded-md transition-all ${
               role === 'recruiter'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-textMuted hover:text-white'
+                ? 'bg-brandPrimary text-white shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
             }`}
           >
             Recruiter
@@ -85,24 +85,24 @@ const Register = () => {
         </div>
 
         {error && (
-          <div className="bg-rose-950/30 border border-rose-500/20 text-rose-400 text-xs rounded-lg p-3.5 mb-6 flex items-start space-x-2.5">
+          <div className="bg-rose-50 border border-rose-200 text-rose-600 text-xs rounded-lg p-3.5 mb-6 flex items-start space-x-2.5">
             <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
-            <span>{error}</span>
+            <span className="font-semibold">{error}</span>
           </div>
         )}
 
         {success && (
-          <div className="bg-emerald-950/30 border border-emerald-500/20 text-emerald-400 text-xs rounded-lg p-3.5 mb-6 flex items-start space-x-2.5">
+          <div className="bg-emerald-50 border border-emerald-200 text-emerald-600 text-xs rounded-lg p-3.5 mb-6 flex items-start space-x-2.5">
             <CheckCircle size={16} className="mt-0.5 flex-shrink-0" />
-            <span>{success}</span>
+            <span className="font-semibold">{success}</span>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-gray-300">Full Name</label>
+            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Full Name</label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500">
+              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
                 <User size={16} />
               </span>
               <input
@@ -117,9 +117,9 @@ const Register = () => {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-gray-300">Email Address</label>
+            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Email Address</label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500">
+              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
                 <Mail size={16} />
               </span>
               <input
@@ -135,9 +135,9 @@ const Register = () => {
 
           {role === 'recruiter' && (
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-gray-300">Company Name</label>
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Company Name</label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500">
+                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
                   <Building size={16} />
                 </span>
                 <input
@@ -153,9 +153,9 @@ const Register = () => {
           )}
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-gray-300">Password</label>
+            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Password</label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500">
+              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
                 <Lock size={16} />
               </span>
               <input
@@ -172,16 +172,16 @@ const Register = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full btn-primary py-2.5 text-sm font-semibold"
+            className="w-full btn-primary py-2.5 text-sm font-semibold shadow-sm"
           >
             {loading ? 'Creating account...' : 'Create Account'}
           </button>
         </form>
 
-        <div className="mt-6 text-center border-t border-darkBorder pt-4">
-          <p className="text-xs text-textMuted">
+        <div className="mt-6 text-center border-t border-[#E5E7EB] pt-4">
+          <p className="text-xs text-textMuted font-semibold">
             Already have an account?{' '}
-            <RouterLink to="/login" className="text-indigo-400 hover:text-indigo-300 font-semibold transition-all">
+            <RouterLink to="/login" className="text-brandPrimary hover:underline font-bold">
               Sign in
             </RouterLink>
           </p>

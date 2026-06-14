@@ -144,23 +144,23 @@ const CandidateProfile = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-4xl pt-16">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white">My Profile</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 font-jakarta">My Profile</h1>
         <p className="text-xs text-textMuted mt-1">Manage resume parsing and professional profile metadata</p>
       </div>
 
       {successMsg && (
-        <div className="bg-emerald-950/40 border border-emerald-500/20 text-emerald-400 text-xs rounded-lg p-3 flex items-center space-x-2">
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-600 text-xs rounded-lg p-3 flex items-center space-x-2">
           <CheckCircle size={16} />
-          <span>{successMsg}</span>
+          <span className="font-semibold">{successMsg}</span>
         </div>
       )}
 
       {errorMsg && (
-        <div className="bg-rose-950/40 border border-rose-500/20 text-rose-400 text-xs rounded-lg p-3 flex items-center space-x-2">
+        <div className="bg-rose-50 border border-rose-200 text-rose-600 text-xs rounded-lg p-3 flex items-center space-x-2">
           <AlertCircle size={16} />
-          <span>{errorMsg}</span>
+          <span className="font-semibold">{errorMsg}</span>
         </div>
       )}
 

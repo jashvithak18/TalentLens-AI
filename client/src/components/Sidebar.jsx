@@ -61,16 +61,10 @@ const Sidebar = () => {
       : adminLinks;
 
   return (
-    <aside className="w-64 glass-panel border-r border-darkBorder flex flex-col justify-between h-screen fixed left-0 top-0 pt-16 z-30">
+    <aside className="hidden md:flex w-64 bg-white border-r border-[#E5E7EB] flex-col justify-between h-screen fixed left-0 top-0 pt-16 z-30">
       <div className="px-4 py-6 flex-1 overflow-y-auto">
         <div className="flex items-center space-x-3 mb-8 px-2">
-          <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white shadow-md shadow-indigo-600/40">
-            TL
-          </div>
-          <div>
-            <h2 className="font-semibold text-white tracking-wide text-sm font-sans">TalentLens AI</h2>
-            <span className="text-xs text-brandSecondary capitalize font-medium">{user.role} Portal</span>
-          </div>
+          <Logo showText={true} iconSize="h-8 w-8" textSize="text-lg" />
         </div>
 
         {/* Navigation links */}
@@ -82,10 +76,10 @@ const Sidebar = () => {
               <Link
                 key={link.path}
                 to={link.path}
-                className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
                   isActive
-                    ? 'bg-indigo-600/10 text-indigo-400 border-l-4 border-indigo-600'
-                    : 'text-textMuted hover:bg-slate-900 hover:text-gray-100'
+                    ? 'bg-brandPrimary/5 text-brandPrimary border-l-4 border-brandPrimary'
+                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
                 }`}
               >
                 <Icon size={18} />
@@ -97,27 +91,27 @@ const Sidebar = () => {
       </div>
 
       {/* Recruiter Blind Hiring Switcher */}
-      <div className="p-4 border-t border-darkBorder space-y-4">
+      <div className="p-4 border-t border-[#E5E7EB] space-y-4">
         {user.role === 'recruiter' && (
           <button
             onClick={() => dispatch(toggleBlindMode())}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold border transition-all ${
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold border transition-all ${
               isBlindMode
-                ? 'bg-emerald-950/30 text-emerald-400 border-emerald-500/30'
-                : 'bg-slate-900 text-textMuted border-darkBorder hover:text-white'
+                ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                : 'bg-slate-50 text-slate-500 border-[#E5E7EB] hover:bg-slate-100 hover:text-slate-800'
             }`}
           >
             <div className="flex items-center space-x-2">
               {isBlindMode ? <EyeOff size={14} /> : <Eye size={14} />}
               <span>Blind Hiring Mode</span>
             </div>
-            <span className={`w-2 h-2 rounded-full ${isBlindMode ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
+            <span className={`w-2 h-2 rounded-full ${isBlindMode ? 'bg-brandAccent animate-pulse' : 'bg-slate-400'}`} />
           </button>
         )}
 
         <button
           onClick={handleLogout}
-          className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium text-rose-400 hover:bg-rose-950/20 transition-all duration-200"
+          className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-bold text-rose-600 hover:bg-rose-50 transition-all duration-200"
         >
           <LogOut size={18} />
           <span>Sign Out</span>

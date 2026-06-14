@@ -32,22 +32,19 @@ const Navbar = () => {
   const unreadCount = notifData?.notifications?.filter(n => !n.isRead).length || 0;
 
   return (
-    <header className="h-16 glass-panel border-b border-darkBorder fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-6">
+    <header className="h-16 bg-white border-b border-[#E5E7EB] fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-6">
       {/* Brand logo (visible on mobile where sidebar is hidden) */}
       <div className="flex items-center space-x-3 md:hidden">
-        <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white">
-          TL
-        </div>
-        <span className="font-semibold text-white tracking-wide text-sm">TalentLens AI</span>
+        <Logo showText={true} iconSize="h-7 w-7" textSize="text-md" />
       </div>
 
       {/* Global Search Bar (Placeholders/Search) */}
-      <div className="hidden md:flex items-center space-x-2 bg-slate-900/60 border border-darkBorder rounded-lg px-3 py-1.5 w-80">
-        <Search size={16} className="text-slate-500" />
+      <div className="hidden md:flex items-center space-x-2 bg-slate-50 border border-[#E5E7EB] rounded-lg px-3 py-1.5 w-80">
+        <Search size={16} className="text-slate-400" />
         <input
           type="text"
           placeholder="Search everywhere..."
-          className="bg-transparent border-none text-xs text-gray-200 focus:outline-none placeholder-slate-500 w-full"
+          className="bg-transparent border-none text-xs text-slate-800 focus:outline-none placeholder-slate-400 w-full"
         />
       </div>
 
@@ -63,7 +60,7 @@ const Navbar = () => {
                   markAllReadMutation.mutate();
                 }
               }}
-              className="p-2 bg-slate-900 border border-darkBorder rounded-lg text-slate-400 hover:text-white transition-all relative"
+              className="p-2 bg-slate-50 border border-[#E5E7EB] rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-all relative"
             >
               <Bell size={18} />
               {unreadCount > 0 && (
@@ -75,26 +72,28 @@ const Navbar = () => {
 
             {/* Notifications Panel */}
             {showNotifications && (
-              <div className="absolute right-0 mt-3 w-80 bg-darkCard border border-darkBorder rounded-xl shadow-2xl p-4 z-50 overflow-hidden">
-                <div className="flex justify-between items-center mb-3 pb-2 border-b border-darkBorder">
-                  <h4 className="font-semibold text-sm text-gray-100">Notifications</h4>
-                  <span className="text-xs text-slate-500">{unreadCount} Unread</span>
+              <div className="absolute right-0 mt-3 w-80 bg-white border border-[#E5E7EB] rounded-xl shadow-lg p-4 z-50 overflow-hidden">
+                <div className="flex justify-between items-center mb-3 pb-2 border-b border-[#E5E7EB]">
+                  <h4 className="font-bold text-sm text-slate-900 font-jakarta">Notifications</h4>
+                  <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">{unreadCount} Unread</span>
                 </div>
 
                 <div className="max-h-64 overflow-y-auto space-y-2">
                   {notifData?.notifications?.length === 0 ? (
-                    <p className="text-xs text-slate-500 text-center py-4">No notifications yet.</p>
+                    <p className="text-xs text-slate-400 text-center py-4">No notifications yet.</p>
                   ) : (
                     notifData?.notifications?.map((notif) => (
                       <div
                         key={notif._id}
-                        className={`p-2.5 rounded-lg text-xs transition-all ${
-                          notif.isRead ? 'bg-slate-900/30' : 'bg-indigo-950/20 border-l-2 border-brandPrimary'
+                        className={`p-2.5 rounded-lg text-xs transition-all border ${
+                          notif.isRead 
+                            ? 'bg-slate-50 border-[#E5E7EB] text-slate-600' 
+                            : 'bg-indigo-50/50 border-brandPrimary/20 text-slate-900 border-l-4 border-l-brandPrimary'
                         }`}
                       >
-                        <p className="font-medium text-gray-200">{notif.title}</p>
-                        <p className="text-textMuted mt-0.5">{notif.message}</p>
-                        <span className="text-[10px] text-slate-600 block mt-1">
+                        <p className="font-bold">{notif.title}</p>
+                        <p className="text-slate-500 mt-0.5 leading-relaxed">{notif.message}</p>
+                        <span className="text-[9px] text-slate-400 font-bold block mt-1">
                           {new Date(notif.createdAt).toLocaleDateString()}
                         </span>
                       </div>
@@ -106,13 +105,13 @@ const Navbar = () => {
           </div>
 
           {/* User Profile Summary */}
-          <div className="flex items-center space-x-3 pl-2 border-l border-darkBorder">
-            <div className="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center text-indigo-400 font-bold border border-slate-700">
+          <div className="flex items-center space-x-3 pl-2 border-l border-[#E5E7EB]">
+            <div className="w-9 h-9 rounded-full bg-slate-50 flex items-center justify-center text-brandPrimary font-bold border border-[#E5E7EB]">
               <UserIcon size={16} />
             </div>
             <div className="hidden md:block">
-              <p className="text-xs font-semibold text-gray-200">{user.name}</p>
-              <p className="text-[10px] text-slate-500 capitalize">{user.role}</p>
+              <p className="text-xs font-bold text-slate-800">{user.name}</p>
+              <p className="text-[10px] text-slate-400 font-bold capitalize">{user.role}</p>
             </div>
           </div>
         </div>

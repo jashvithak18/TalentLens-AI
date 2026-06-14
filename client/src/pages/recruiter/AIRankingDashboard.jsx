@@ -116,9 +116,9 @@ const AIRankingDashboard = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-start">
+      <div className="flex justify-between items-center pt-16">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white font-sans">
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 font-jakarta">
             AI Calibration Dashboard: {job.title}
           </h1>
           <p className="text-xs text-textMuted mt-1">Review explainable fits, risks, and simulated JD calibrations</p>

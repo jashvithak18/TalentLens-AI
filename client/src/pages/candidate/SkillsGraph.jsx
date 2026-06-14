@@ -28,19 +28,19 @@ const SkillsGraph = () => {
     : data?.knowledgeGraph?.edges || [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pt-16">
       {/* Header with Switcher */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Interactive Graph Workspace</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 font-jakarta">Interactive Graph Workspace</h1>
           <p className="text-xs text-textMuted mt-1">Explore proof verification networks and entity relations mappings</p>
         </div>
 
-        <div className="flex bg-slate-900 border border-darkBorder rounded-lg p-1 text-xs font-semibold">
+        <div className="flex bg-slate-50 border border-[#E5E7EB] rounded-lg p-1 text-xs font-bold shadow-sm">
           <button
             onClick={() => setGraphType('evidence')}
             className={`px-3 py-1.5 rounded-md transition-all ${
-              graphType === 'evidence' ? 'bg-indigo-600 text-white' : 'text-textMuted hover:text-white'
+              graphType === 'evidence' ? 'bg-brandPrimary text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'
             }`}
           >
             Skill Evidence Proofs
@@ -48,7 +48,7 @@ const SkillsGraph = () => {
           <button
             onClick={() => setGraphType('knowledge')}
             className={`px-3 py-1.5 rounded-md transition-all ${
-              graphType === 'knowledge' ? 'bg-indigo-600 text-white' : 'text-textMuted hover:text-white'
+              graphType === 'knowledge' ? 'bg-brandPrimary text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'
             }`}
           >
             Entity Knowledge Graph

@@ -5,8 +5,10 @@ import { useSelector } from 'react-redux';
 // Layout components
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
+import BottomNavigation from './components/BottomNavigation';
 
 // Public/Auth Pages
+import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
@@ -48,13 +50,13 @@ const App = () => {
 
   return (
     <Router>
-      <div className="min-h-screen bg-darkBg text-gray-100 flex">
+      <div className="min-h-screen bg-darkBg text-slate-900 flex">
         {token && <Sidebar />}
-        <div className={`flex-1 flex flex-col min-w-0 ${token ? 'pl-64 pt-16' : ''}`}>
+        <div className={`flex-1 flex flex-col min-w-0 ${token ? 'md:pl-64 pt-16 pb-16 md:pb-0' : ''}`}>
           {token && <Navbar />}
-          <main className="flex-1 p-6 overflow-y-auto">
+          <main className={`flex-1 ${token ? 'p-6 overflow-y-auto' : ''}`}>
             <Routes>
-              {/* Redirect root based on role */}
+              {/* Redirect root based on role or show Landing */}
               <Route
                 path="/"
                 element={
@@ -67,7 +69,7 @@ const App = () => {
                       <Navigate to="/admin/dashboard" replace />
                     )
                   ) : (
-                    <Navigate to="/login" replace />
+                    <Landing />
                   )
                 }
               />
@@ -208,6 +210,7 @@ const App = () => {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
+          {token && <BottomNavigation />}
         </div>
       </div>
     </Router>

@@ -29,9 +29,9 @@ const Assessments = () => {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-4xl pt-16">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white">Assessment Hub</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 font-jakarta">Assessment Hub</h1>
         <p className="text-xs text-textMuted mt-1">Complete technical challenges and behavioral tests to calibrate your DNA score</p>
       </div>
 

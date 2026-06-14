@@ -34,10 +34,10 @@ const TalentDiscovery = () => {
   const activeInfo = categories.find(c => c.id === activeCategory);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pt-16">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white font-sans">Talent Discovery Board</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 font-jakarta">Talent Discovery Board</h1>
         <p className="text-xs text-textMuted mt-1">Discover hidden potentials, emerging developers, and consistent performers</p>
       </div>
 
@@ -49,14 +49,14 @@ const TalentDiscovery = () => {
             <button
               key={c.id}
               onClick={() => setActiveCategory(c.id)}
-              className={`flex flex-col items-start p-4 rounded-xl border text-left transition-all ${
+              className={`flex flex-col items-start p-4 rounded-xl border text-left transition-all shadow-sm ${
                 activeCategory === c.id
-                  ? 'bg-indigo-600/10 border-indigo-600 text-indigo-400 font-semibold'
-                  : 'bg-darkCard border-darkBorder text-textMuted hover:border-slate-800 hover:text-white'
+                  ? 'bg-brandPrimary/5 border-brandPrimary text-brandPrimary font-bold'
+                  : 'bg-white border-[#E5E7EB] text-slate-500 hover:border-slate-300 hover:text-slate-700 hover:bg-slate-50'
               }`}
             >
               <Icon size={18} className="mb-2" />
-              <span className="text-xs">{c.label}</span>
+              <span className="text-xs font-semibold">{c.label}</span>
             </button>
           );
         })}

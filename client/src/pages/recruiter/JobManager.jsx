@@ -59,10 +59,10 @@ const JobManager = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pt-16">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white font-sans">Job Postings</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 font-jakarta">Job Postings</h1>
           <p className="text-xs text-textMuted mt-1">Manage active listings and review applicant rankings</p>
         </div>
         <button
@@ -75,9 +75,16 @@ const JobManager = () => {
       </div>
 
       {successMsg && (
-        <div className="bg-emerald-950/40 border border-emerald-500/20 text-emerald-400 text-xs rounded-lg p-3.5 flex items-center space-x-2">
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-600 text-xs rounded-lg p-3.5 flex items-center space-x-2">
           <CheckCircle size={16} />
-          <span>{successMsg}</span>
+          <span className="font-semibold">{successMsg}</span>
+        </div>
+      )}
+
+      {errorMsg && (
+        <div className="bg-rose-50 border border-rose-200 text-rose-600 text-xs rounded-lg p-3.5 flex items-center space-x-2">
+          <AlertCircle size={16} />
+          <span className="font-semibold">{errorMsg}</span>
         </div>
       )}
 

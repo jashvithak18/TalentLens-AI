@@ -52,11 +52,11 @@ const Copilot = () => {
   ];
 
   return (
-    <div className="flex flex-col h-[calc(100vh-100px)] space-y-4 max-w-4xl mx-auto">
+    <div className="flex flex-col h-[calc(100vh-100px)] space-y-4 max-w-4xl mx-auto pt-16">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white flex items-center space-x-2">
-          <Bot size={26} className="text-indigo-400" />
+        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 flex items-center space-x-2 font-jakarta">
+          <Bot size={26} className="text-brandPrimary" />
           <span>Recruiter AI Copilot</span>
         </h1>
         <p className="text-xs text-textMuted mt-1">Ask questions about ratings, shortlists, and candidate comparisons</p>
