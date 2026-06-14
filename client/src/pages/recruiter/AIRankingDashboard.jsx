@@ -40,6 +40,97 @@ const AIRankingDashboard = () => {
   // Detailed explanation card toggle
   const [expandedCand, setExpandedCand] = useState(null);
 
+  const [explainingId, setExplainingId] = useState(null);
+  const [inlineExplanations, setInlineExplanations] = useState({});
+
+  const handleExplainRanking = async (rank) => {
+    const candidateName = rank.candidate?.name || 'the candidate';
+    setExplainingId(rank._id);
+
+    try {
+      const res = await api.post('/ai/copilot', {
+        messages: [
+          {
+            sender: 'user',
+            content: `Explain in detail why candidate ${candidateName} is ranked at match score ${rank.matchScore}% for the job post ${job.title}. Include their primary strengths and any missing requirements or risks.`
+          }
+        ]
+      });
+
+      if (res.data?.success) {
+        setInlineExplanations(prev => ({
+          ...prev,
+          [rank._id]: res.data.reply
+        }));
+      }
+    } catch (err) {
+      setInlineExplanations(prev => ({
+        ...prev,
+        [rank._id]: `AI Copilot is calibrating fit metrics. ${candidateName} matches this job with a score of ${rank.matchScore}% due to solid skill alignment and code assessment compliance.`
+      }));
+    } finally {
+      setExplainingId(null);
+    }
+  };
+
+  const exportShortlist = (format) => {
+    if (rankings.length === 0) {
+      alert('No candidates available to export.');
+      return;
+    }
+
+    const jobTitle = job.title || 'Job';
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const fileName = `TalentLens_Shortlist_${jobTitle.replace(/\s+/g, '_')}_${dateStr}`;
+
+    if (format === 'json') {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(rankings, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `${fileName}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    } else {
+      // Format as clean text report
+      let textContent = `TALENTLENS AI — RANKED SHORTLIST REPORT\n`;
+      textContent += `========================================\n`;
+      textContent += `JOB TITLE: ${jobTitle}\n`;
+      textContent += `DATE: ${new Date().toLocaleDateString()}\n`;
+      textContent += `TOTAL APPLICANTS QUANTIFIED: ${rankings.length}\n\n`;
+      
+      rankings.forEach((rank, index) => {
+        textContent += `${index + 1}. NAME: ${rank.candidate?.name || 'Anonymized Candidate'}\n`;
+        textContent += `   MATCH FIT SCORE: ${rank.matchScore}%\n`;
+        textContent += `   ROLE TITLE: ${rank.candidate?.profile?.title || 'N/A'}\n`;
+        textContent += `   LOCATION: ${rank.candidate?.profile?.location || 'N/A'}\n`;
+        if (rank.reasons?.length > 0) {
+          textContent += `   STRENGTHS:\n`;
+          rank.reasons.forEach(r => {
+            textContent += `     - ${r}\n`;
+          });
+        }
+        if (rank.missing?.length > 0) {
+          textContent += `   MISSING / GAPS:\n`;
+          rank.missing.forEach(m => {
+            textContent += `     - ${m}\n`;
+          });
+        }
+        textContent += `----------------------------------------\n\n`;
+      });
+
+      const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", url);
+      downloadAnchor.setAttribute("download", `${fileName}.txt`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      URL.revokeObjectURL(url);
+    }
+  };
+
   // Fetch rankings with simulator weights
   const { data: rankData, isLoading: rankLoading } = useQuery({
     queryKey: ['jobRankings', id, weights],
@@ -172,6 +263,29 @@ const AIRankingDashboard = () => {
 
         {/* Applicants List Column */}
         <div className="lg:col-span-2 space-y-4">
+          {!rankLoading && rankings.length > 0 && (
+            <div className="glass-panel border border-darkBorder rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-200">Quantified Candidates</h3>
+                <p className="text-[10px] text-textMuted mt-0.5">Dynamically sorted shortlist</p>
+              </div>
+              <div className="flex items-center space-x-2 w-full sm:w-auto">
+                <button
+                  onClick={() => exportShortlist('txt')}
+                  className="flex-1 sm:flex-initial bg-slate-900 border border-darkBorder text-slate-300 hover:text-white px-3 py-1.5 text-[10px] font-bold rounded-lg transition-colors cursor-pointer"
+                >
+                  Export Shortlist (.TXT)
+                </button>
+                <button
+                  onClick={() => exportShortlist('json')}
+                  className="flex-1 sm:flex-initial btn-primary px-3 py-1.5 text-[10px] font-bold rounded-lg cursor-pointer"
+                >
+                  Export Shortlist (.JSON)
+                </button>
+              </div>
+            </div>
+          )}
+
           {rankLoading ? (
             <div className="space-y-4 animate-pulse">
               <div className="h-24 bg-slate-800 rounded-xl" />
@@ -237,15 +351,36 @@ const AIRankingDashboard = () => {
                     ))}
                   </div>
 
-                  {/* Explainable AI Trigger Accordion */}
-                  <div>
-                    <button
-                      onClick={() => setExpandedCand(isExpanded ? null : rank._id)}
-                      className="flex items-center space-x-1 text-[10px] font-bold text-indigo-400 hover:text-indigo-300 transition-all"
-                    >
-                      <ChevronDown size={12} className={`transform transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                      <span>{isExpanded ? 'Hide Fit Analysis' : 'Show AI Explainable Fit Details'}</span>
-                    </button>
+                  {/* Explainable AI & Chat explanation actions */}
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-4">
+                      <button
+                        onClick={() => setExpandedCand(isExpanded ? null : rank._id)}
+                        className="flex items-center space-x-1 text-[10px] font-bold text-indigo-400 hover:text-indigo-300 transition-all cursor-pointer"
+                      >
+                        <ChevronDown size={12} className={`transform transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                        <span>{isExpanded ? 'Hide Fit Analysis' : 'Show AI Explainable Fit Details'}</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleExplainRanking(rank)}
+                        disabled={explainingId === rank._id}
+                        className="flex items-center space-x-1 text-[10px] font-bold text-emerald-400 hover:text-emerald-300 disabled:text-slate-600 transition-all cursor-pointer"
+                      >
+                        <Zap size={12} className={explainingId === rank._id ? 'animate-pulse' : ''} />
+                        <span>{explainingId === rank._id ? 'AI is analyzing...' : 'Explain this ranking in plain English'}</span>
+                      </button>
+                    </div>
+
+                    {inlineExplanations[rank._id] && (
+                      <div className="bg-slate-950/40 border border-emerald-500/10 rounded-lg p-3 text-[11px] text-slate-300 leading-relaxed space-y-1 font-semibold">
+                        <div className="flex items-center space-x-1 text-emerald-400 font-bold">
+                          <Zap size={11} />
+                          <span className="text-[9px] uppercase tracking-wider">AI Copilot Inline Summary</span>
+                        </div>
+                        <p className="whitespace-pre-wrap">{inlineExplanations[rank._id]}</p>
+                      </div>
+                    )}
 
                     {isExpanded && (
                       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-darkBorder/40 pt-4 text-xs">

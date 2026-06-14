@@ -9,6 +9,7 @@ const CandidateScore = require('../models/CandidateScore');
 const AIRanking = require('../models/AIRanking');
 const Job = require('../models/Job');
 const Notification = require('../models/Notification');
+const ActivityLog = require('../models/ActivityLog');
 const { aiGenerateCandidateDNA, aiEvaluateCandidateFit } = require('../utils/aiHelpers');
 
 // Get all active assessments
@@ -223,6 +224,13 @@ exports.submitAssessment = async (req, res, next) => {
       completedAt: new Date()
     });
 
+    // Log user activity
+    await ActivityLog.create({
+      user: req.user.id,
+      action: 'take_assessment',
+      details: `Completed assessment: "${assessment.title}" with score: ${finalPercentage}%`
+    });
+
     // Notify candidate of completed test
     await Notification.create({
       recipient: req.user.id,
@@ -236,7 +244,8 @@ exports.submitAssessment = async (req, res, next) => {
     const profile = await CandidateProfile.findOne({ user: req.user.id });
     if (profile) {
       const allSubmissions = await Submission.find({ candidate: req.user.id });
-      const dnaData = await aiGenerateCandidateDNA(profile, allSubmissions);
+      const activities = await ActivityLog.find({ user: req.user.id });
+      const dnaData = await aiGenerateCandidateDNA(profile, allSubmissions, activities);
       await CandidateScore.findOneAndUpdate(
         { candidate: req.user.id },
         {

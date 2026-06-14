@@ -3,6 +3,7 @@ const User = require('../models/User');
 const Submission = require('../models/Submission');
 const CandidateScore = require('../models/CandidateScore');
 const Skill = require('../models/Skill');
+const ActivityLog = require('../models/ActivityLog');
 const { uploadToCloudinary } = require('../middleware/upload');
 const { aiParseResume, aiDetectHiddenSkills, aiGenerateCandidateDNA } = require('../utils/aiHelpers');
 const fs = require('fs');
@@ -56,10 +57,18 @@ exports.updateProfile = async (req, res, next) => {
 
     await profile.save();
 
+    // Log update profile activity
+    await ActivityLog.create({
+      user: req.user.id,
+      action: 'update_profile',
+      details: 'Updated profile details and skills list'
+    });
+
     // Trigger AI DNA calculation in background if skills change
     if (skills !== undefined) {
       const submissions = await Submission.find({ candidate: req.user.id });
-      const dnaData = await aiGenerateCandidateDNA(profile, submissions);
+      const activities = await ActivityLog.find({ user: req.user.id });
+      const dnaData = await aiGenerateCandidateDNA(profile, submissions, activities);
       await CandidateScore.findOneAndUpdate(
         { candidate: req.user.id },
         {
@@ -130,9 +139,17 @@ exports.uploadResume = async (req, res, next) => {
     profile.inferredSkills = inferred;
     await profile.save();
 
+    // Log user activity
+    await ActivityLog.create({
+      user: req.user.id,
+      action: 'upload_resume',
+      details: `Uploaded and parsed resume with confidence: ${profile.resumeParsingConfidence}%`
+    });
+
     // Trigger DNA calculation
     const submissions = await Submission.find({ candidate: req.user.id });
-    const dnaData = await aiGenerateCandidateDNA(profile, submissions);
+    const activities = await ActivityLog.find({ user: req.user.id });
+    const dnaData = await aiGenerateCandidateDNA(profile, submissions, activities);
     await CandidateScore.findOneAndUpdate(
       { candidate: req.user.id },
       {

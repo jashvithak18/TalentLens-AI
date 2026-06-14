@@ -237,7 +237,7 @@ exports.aiDetectHiddenSkills = async (candidateDetails) => {
 };
 
 // 4. Candidate DNA + Potential Profile + Behavioral Analytics
-exports.aiGenerateCandidateDNA = async (candidateDetails, submissionHistory = []) => {
+exports.aiGenerateCandidateDNA = async (candidateDetails, submissionHistory = [], activityHistory = []) => {
   const fallbackDNA = {
     dna: {
       problemSolving: 85,
@@ -270,7 +270,7 @@ exports.aiGenerateCandidateDNA = async (candidateDetails, submissionHistory = []
   }
 
   const prompt = `
-    Evaluate the candidate's profile and assessment history to generate a complete talent profile.
+    Evaluate the candidate's profile, assessment history, and activity signals to generate a complete talent profile.
     This includes DNA metrics (Radar values 0-100), Behavioral Intelligence (0-100), and Growth Potential (0-100).
     
     Candidate Data:
@@ -278,6 +278,9 @@ exports.aiGenerateCandidateDNA = async (candidateDetails, submissionHistory = []
     Experience: ${JSON.stringify(candidateDetails.experience)}
     Projects: ${JSON.stringify(candidateDetails.projects)}
     Submissions: ${JSON.stringify(submissionHistory)}
+    Activity Logs (behavioral/activity signals): ${JSON.stringify(activityHistory)}
+
+    Analyze the candidate's activity / behavioral signals (e.g. profile views, test response time, profile update frequency, GitHub/portfolio links clicks) to adjust metrics like "reliabilityScore", "learningScore", "adaptability", "potential", and "consistency".
 
     Return ONLY JSON matching this exact scheme:
     {
@@ -321,11 +324,20 @@ exports.aiGenerateCandidateDNA = async (candidateDetails, submissionHistory = []
 // 5. Recruiter AI Copilot (Chat)
 exports.aiRecruiterCopilotChat = async (messages, candidateDataList, jobDataList) => {
   if (!process.env.GROQ_API_KEY) {
-    const userQuery = messages[messages.length - 1].content.toLowerCase();
-    if (userQuery.includes('first') || userQuery.includes('rank')) {
+    const userQuery = messages[messages.length - 1].content;
+    const queryLower = userQuery.toLowerCase();
+
+    // Check if it's a request to explain ranking for a candidate
+    if (queryLower.includes('compare candidate') || queryLower.includes('why are they ranked') || queryLower.includes('explain')) {
+      const match = userQuery.match(/candidate ([^,.]+)/i);
+      const name = match ? match[1].trim() : 'this candidate';
+      return `**AI Fit Explanation for ${name}:**\n- **Technical Alignment:** Demonstrates high alignment with the core job requirements. Code samples show strong structure.\n- **Strengths:** Excellent project contributions, high assessment completion rates, and positive behavioral indicators.\n- **Risks & Gaps:** Minor gaps in specialized system tools. Overall fit remains very strong.`;
+    }
+
+    if (queryLower.includes('first') || queryLower.includes('rank')) {
       return "Candidate Alex Rivera is ranked first due to outstanding MERN stack technical scores and an exceptional DSA score of 95% on the technical assessment.";
     }
-    if (userQuery.includes('underrated') || userQuery.includes('growth')) {
+    if (queryLower.includes('underrated') || queryLower.includes('growth')) {
       return "Candidate Jordan Smith has high future growth potential (94%) and robust self-taught projects, making them underrated despite having only 1 year of professional experience.";
     }
     return "I am ready to help you analyze candidate DNA scores, compare candidates, or suggest a shortlist. Please ask me about the available candidates.";

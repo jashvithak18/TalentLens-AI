@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../utils/api';
@@ -23,6 +23,12 @@ const CandidateDashboard = () => {
       return res.data;
     }
   });
+
+  useEffect(() => {
+    // Log candidate dashboard view activity
+    api.post('/activities/log', { action: 'dashboard_view', details: 'Candidate viewed dashboard' })
+      .catch(err => console.error('Failed to log dashboard view activity', err));
+  }, []);
 
   if (isLoading) {
     return <LoadingScreen text="Calibrating candidate DNA metrics..." fullScreen={false} />;

@@ -4,6 +4,7 @@ const User = require('../models/User');
 const Submission = require('../models/Submission');
 const CandidateScore = require('../models/CandidateScore');
 const AIRanking = require('../models/AIRanking');
+const ActivityLog = require('../models/ActivityLog');
 const {
   aiEvaluateCandidateFit,
   aiDetectHiddenSkills,
@@ -21,6 +22,15 @@ exports.getSemanticMatch = async (req, res, next) => {
 
     if (!job || !candidate) {
       return res.status(404).json({ success: false, error: 'Job or Candidate not found' });
+    }
+
+    // Log profile view activity if viewed by a recruiter
+    if (req.user && req.user.role === 'recruiter') {
+      await ActivityLog.create({
+        user: candidateId,
+        action: 'profile_view',
+        details: `Profile viewed by recruiter: ${req.user.name} for job: ${job.title}`
+      });
     }
 
     const fitData = await aiEvaluateCandidateFit(job, candidate);
@@ -61,7 +71,8 @@ exports.getCandidateDNA = async (req, res, next) => {
     }
 
     const submissions = await Submission.find({ candidate: candidateId });
-    const dnaData = await aiGenerateCandidateDNA(profile, submissions);
+    const activities = await ActivityLog.find({ user: candidateId });
+    const dnaData = await aiGenerateCandidateDNA(profile, submissions, activities);
 
     const scores = await CandidateScore.findOneAndUpdate(
       { candidate: candidateId },

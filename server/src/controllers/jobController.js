@@ -109,6 +109,13 @@ exports.applyJob = async (req, res, next) => {
       coverLetter
     });
 
+    // Log user activity
+    await ActivityLog.create({
+      user: req.user.id,
+      action: 'apply',
+      details: `Applied to job: ${job.title} (${jobId})`
+    });
+
     // Notify Recruiter
     await Notification.create({
       recipient: job.recruiter,

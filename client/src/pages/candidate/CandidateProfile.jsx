@@ -22,10 +22,17 @@ const CandidateProfile = () => {
 
   // Skills state
   const [selectedSkills, setSelectedSkills] = useState([]);
+  const [skillInput, setSkillInput] = useState('');
   const [allSkills, setAllSkills] = useState([]);
-  const [showCustomInput, setShowCustomInput] = useState(false);
-  const [customSkillInput, setCustomSkillInput] = useState('');
+  const [filteredSkills, setFilteredSkills] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = React.useRef(null);
+
+  useEffect(() => {
+    // Log profile view activity from the candidate
+    api.post('/activities/log', { action: 'profile_view', details: 'Candidate opened profile settings page' })
+      .catch(err => console.error('Failed to log profile view activity', err));
+  }, []);
 
   // Fetch profile
   const { data, isLoading } = useQuery({
@@ -58,6 +65,31 @@ const CandidateProfile = () => {
     fetchAllSkills();
   }, []);
 
+  // Filter skills based on input
+  useEffect(() => {
+    if (!skillInput.trim()) {
+      setFilteredSkills([]);
+      return;
+    }
+    const term = skillInput.toLowerCase();
+    const filtered = allSkills.filter(s => 
+      s.toLowerCase().includes(term) && 
+      !selectedSkills.some(selected => selected.toLowerCase() === s.toLowerCase())
+    );
+    setFilteredSkills(filtered);
+  }, [skillInput, allSkills, selectedSkills]);
+
+  // Handle clicking outside the dropdown to close it
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleAddSkill = (skill) => {
     const trimmed = skill.trim();
     if (trimmed && !selectedSkills.some(s => s.toLowerCase() === trimmed.toLowerCase())) {
@@ -66,6 +98,8 @@ const CandidateProfile = () => {
         setAllSkills([...allSkills, trimmed].sort());
       }
     }
+    setSkillInput('');
+    setShowDropdown(false);
   };
 
   const handleRemoveSkill = (skillToRemove) => {
@@ -295,68 +329,43 @@ const CandidateProfile = () => {
                 )}
               </div>
 
-              {/* Skills Dropdown Selector */}
-              <div className="space-y-2">
-                <select
-                  value=""
+              {/* Autocomplete Input */}
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Type a skill (e.g. React, Python...)"
+                  value={skillInput}
                   onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === '__custom__') {
-                      setShowCustomInput(true);
-                    } else if (val) {
-                      handleAddSkill(val);
-                    }
+                    setSkillInput(e.target.value);
+                    setShowDropdown(true);
                   }}
-                  className="custom-input text-xs w-full cursor-pointer bg-slate-900 border border-darkBorder rounded-lg px-3 py-2 text-gray-300"
-                >
-                  <option value="" disabled>-- Select a skill to add --</option>
-                  {allSkills
-                    .filter(s => !selectedSkills.some(selected => selected.toLowerCase() === s.toLowerCase()))
-                    .map((skill, index) => (
-                      <option key={index} value={skill}>
+                  onFocus={() => setShowDropdown(true)}
+                  className="custom-input text-xs w-full"
+                />
+                
+                {showDropdown && skillInput.trim() !== '' && (
+                  <div className="absolute z-50 w-full mt-1 bg-slate-900 border border-darkBorder rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                    {filteredSkills.map((skill, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => handleAddSkill(skill)}
+                        className="w-full text-left px-4 py-2 text-xs text-gray-300 hover:bg-indigo-900/30 hover:text-white transition-colors"
+                      >
                         {skill}
-                      </option>
+                      </button>
                     ))}
-                  <option value="__custom__" className="text-indigo-400 font-semibold">
-                    + Add a custom skill...
-                  </option>
-                </select>
-
-                {/* Custom Skill Text Input (Shown when '+ Add a custom skill...' is selected) */}
-                {showCustomInput && (
-                  <div className="flex items-center space-x-2 mt-2 bg-slate-900 p-2.5 rounded-lg border border-darkBorder animate-fadeIn">
-                    <input
-                      type="text"
-                      placeholder="Enter custom skill name..."
-                      value={customSkillInput}
-                      onChange={(e) => setCustomSkillInput(e.target.value)}
-                      className="custom-input text-xs flex-1"
-                      autoFocus
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const trimmed = customSkillInput.trim();
-                        if (trimmed) {
-                          handleAddSkill(trimmed);
-                          setCustomSkillInput('');
-                          setShowCustomInput(false);
-                        }
-                      }}
-                      className="btn-primary text-[10px] py-1.5 px-3 font-semibold"
-                    >
-                      Add
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCustomSkillInput('');
-                        setShowCustomInput(false);
-                      }}
-                      className="text-gray-400 hover:text-white text-[10px]"
-                    >
-                      Cancel
-                    </button>
+                    
+                    {/* Add Custom Skill Option */}
+                    {!allSkills.some(s => s.toLowerCase() === skillInput.trim().toLowerCase()) && (
+                      <button
+                        type="button"
+                        onClick={() => handleAddSkill(skillInput.trim())}
+                        className="w-full text-left px-4 py-2 text-xs text-indigo-400 font-semibold hover:bg-indigo-900/30 hover:text-indigo-300 transition-colors border-t border-darkBorder"
+                      >
+                        + Add "{skillInput.trim()}" as a new skill
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
