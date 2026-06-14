@@ -18,18 +18,13 @@ exports.register = async (req, res, next) => {
       return res.status(400).json({ success: false, error: 'User already exists' });
     }
 
-    // Create verification token
-    const verificationToken = crypto.randomBytes(20).toString('hex');
-    const verificationExpire = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
-
-    // Create user
+    // Create user (auto-verified)
     user = await User.create({
       name,
       email,
       password,
       role: role || 'candidate',
-      verificationToken,
-      verificationExpire
+      isVerified: true
     });
 
     // Create profile based on role
@@ -42,29 +37,9 @@ exports.register = async (req, res, next) => {
       });
     }
 
-    // Send verification email
-    const verifyUrl = `${req.protocol}://${req.get('host')}/api/auth/verify-email/${verificationToken}`;
-    const message = `Please verify your email by clicking: \n\n ${verifyUrl}`;
-
-    console.log('--- VERIFICATION LINK BACKUP ---');
-    console.log(`Email: ${user.email}`);
-    console.log(`URL: ${verifyUrl}`);
-    console.log('--------------------------------');
-
-    try {
-      await sendEmail({
-        email: user.email,
-        subject: 'Email Verification - TalentLens AI',
-        message,
-        html: `<p>Please verify your email by clicking the link below:</p><a href="${verifyUrl}">${verifyUrl}</a>`
-      });
-    } catch (err) {
-      console.error('Email could not be sent via SMTP:', err.message);
-    }
-
     res.status(201).json({
       success: true,
-      message: 'Registration successful! Please check your email to verify your account.'
+      message: 'Registration successful! You can now log in.'
     });
   } catch (error) {
     next(error);

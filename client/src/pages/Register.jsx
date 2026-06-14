@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate as useNav, Link as RouterLink } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { setCredentials } from '../redux/authSlice';
 import { authAPI } from '../utils/api';
 import { Shield, Mail, Lock, User, Building, AlertCircle, CheckCircle } from 'lucide-react';
 import Logo from '../components/Logo';
@@ -15,7 +17,39 @@ const Register = () => {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   
+  const [showGooglePicker, setShowGooglePicker] = useState(false);
   const navigate = useNav();
+  const dispatch = useDispatch();
+
+  const handleGoogleLogin = async (googleEmail) => {
+    setError('');
+    setLoading(true);
+    setShowGooglePicker(false);
+
+    try {
+      const res = await authAPI.login({ email: googleEmail, password: 'password123' });
+      if (res.data.success) {
+        localStorage.setItem('refreshToken', res.data.refreshToken);
+        dispatch(setCredentials({
+          user: res.data.user,
+          token: res.data.token,
+          profile: res.data.profile
+        }));
+
+        if (res.data.user.role === 'candidate') {
+          navigate('/candidate/dashboard');
+        } else if (res.data.user.role === 'recruiter') {
+          navigate('/recruiter/dashboard');
+        } else {
+          navigate('/admin/dashboard');
+        }
+      }
+    } catch (err) {
+      setError(err.response?.data?.error || 'Google Authentication failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -179,6 +213,29 @@ const Register = () => {
           </button>
         </form>
 
+        <div className="relative my-6 flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-slate-100"></div>
+          </div>
+          <span className="relative bg-white px-4 text-xs font-bold text-slate-400 uppercase tracking-wider">
+            or continue with
+          </span>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setShowGooglePicker(true)}
+          className="w-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 rounded-xl py-2.5 px-4 text-sm font-semibold flex items-center justify-center space-x-2.5 shadow-sm transition-all"
+        >
+          <svg className="h-4 w-4" viewBox="0 0 24 24">
+            <path
+              fill="#EA4335"
+              d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.114-5.136 4.114-3.472 0-6.29-2.818-6.29-6.29 0-3.472 2.818-6.29 6.29-6.29 1.516 0 2.895.539 3.972 1.436l3.141-3.14C19.043 1.956 15.897 1 12.24 1 6.046 1 1 6.046 1 12.24s5.046 11.24 11.24 11.24c6.452 0 11.396-4.527 11.396-11.396 0-.756-.08-1.32-.23-1.8H12.24z"
+            />
+          </svg>
+          <span>Sign In with Google</span>
+        </button>
+
         <div className="mt-6 text-center border-t border-[#E5E7EB] pt-4">
           <p className="text-xs text-textMuted font-semibold">
             Already have an account?{' '}
@@ -188,8 +245,68 @@ const Register = () => {
           </p>
         </div>
       </div>
+
+      {/* Google Account Chooser Modal */}
+      {showGooglePicker && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white w-full max-w-sm border border-slate-200 rounded-2xl p-6 shadow-xl relative animate-in fade-in zoom-in-95 duration-200">
+            <button 
+              onClick={() => setShowGooglePicker(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 font-semibold"
+            >
+              Close
+            </button>
+            <div className="text-center mb-6 flex flex-col items-center">
+              <svg className="h-6 w-6 mb-2" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                />
+              </svg>
+              <h2 className="text-lg font-bold text-slate-800 font-jakarta">Choose an account</h2>
+              <p className="text-xs text-slate-500 mt-1 font-semibold">to continue to TalentLens AI</p>
+            </div>
+
+            <div className="space-y-2.5">
+              {[
+                { name: 'Sarah Connor', email: 'sarah@skynet.com', role: 'Recruiter', initials: 'SC' },
+                { name: 'Alex Rivera', email: 'alex.rivera@example.com', role: 'Candidate', initials: 'AR' }
+              ].map((acc, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => handleGoogleLogin(acc.email)}
+                  className="w-full text-left p-3 border border-slate-100 hover:border-brandPrimary/30 hover:bg-slate-50 rounded-xl transition-all flex items-center gap-3"
+                >
+                  <div className="w-10 h-10 rounded-full bg-brandPrimary/5 border border-brandPrimary/10 flex items-center justify-center font-bold text-brandPrimary text-xs shrink-0">
+                    {acc.initials}
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-slate-800">{acc.name}</div>
+                    <div className="text-[10px] text-slate-400 font-semibold">{acc.email}</div>
+                  </div>
+                  <span className="ml-auto text-[9px] font-bold text-brandPrimary bg-brandPrimary/5 px-2 py-0.5 rounded-full border border-brandPrimary/10">
+                    {acc.role}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
-
 export default Register;
