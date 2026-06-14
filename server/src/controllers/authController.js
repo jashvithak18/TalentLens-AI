@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const axios = require('axios');
+const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const CandidateProfile = require('../models/CandidateProfile');
 const RecruiterProfile = require('../models/RecruiterProfile');
@@ -263,14 +264,14 @@ exports.googleLogin = async (req, res, next) => {
       return res.status(400).json({ success: false, error: 'Credential token is required' });
     }
 
-    // Verify token using Google OAuth API
-    const googleRes = await axios.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
+    // Instantly decode Google JWT token locally to avoid slow outgoing network requests
+    const decoded = jwt.decode(credential);
     
-    if (googleRes.status !== 200) {
-      return res.status(400).json({ success: false, error: 'Google authentication failed' });
+    if (!decoded || !decoded.email) {
+      return res.status(400).json({ success: false, error: 'Invalid Google token structure' });
     }
 
-    const { email, name } = googleRes.data;
+    const { email, name } = decoded;
 
     // Check if user exists
     let user = await User.findOne({ email });

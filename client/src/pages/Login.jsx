@@ -78,7 +78,7 @@ const Login = () => {
     /* global google */
     if (typeof window !== 'undefined' && window.google) {
       window.google.accounts.id.initialize({
-        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || "1008719970978-hb24n2dstb40o45d4feuo2ktjycgg6qf.apps.googleusercontent.com",
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || "255856469546-jm9anpcsg05ek73fhkpi40ses535lc1k.apps.googleusercontent.com",
         callback: handleGoogleCredentialResponse
       });
 
