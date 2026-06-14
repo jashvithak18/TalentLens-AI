@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../utils/api';
-import { Mail, CheckCircle, AlertCircle } from 'lucide-react';
+import { Mail, Lock, CheckCircle, AlertCircle } from 'lucide-react';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
@@ -16,12 +17,14 @@ const ForgotPassword = () => {
     setLoading(true);
 
     try {
-      const res = await api.post('/auth/forgot-password', { email });
+      const res = await api.post('/auth/forgot-password', { email, password });
       if (res.data.success) {
-        setSuccess('Password reset link sent to your email.');
+        setSuccess('Password reset successfully. You can now log in.');
+        setEmail('');
+        setPassword('');
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to request password reset link.');
+      setError(err.response?.data?.error || 'Failed to reset password.');
     } finally {
       setLoading(false);
     }
@@ -31,7 +34,7 @@ const ForgotPassword = () => {
     <div className="min-h-screen flex items-center justify-center bg-darkBg px-4 relative">
       <div className="w-full max-w-md glass-panel rounded-2xl p-8 border border-darkBorder">
         <h2 className="text-xl font-bold text-white text-center mb-2">Forgot Password</h2>
-        <p className="text-xs text-textMuted text-center mb-6">Enter your email and we'll send you a password reset link.</p>
+        <p className="text-xs text-textMuted text-center mb-6">Enter your email and new password to reset it directly.</p>
 
         {error && (
           <div className="bg-rose-950/30 border border-rose-500/20 text-rose-400 text-xs rounded-lg p-3.5 mb-6 flex items-start space-x-2.5">
@@ -65,8 +68,25 @@ const ForgotPassword = () => {
             </div>
           </div>
 
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-gray-300">New Password</label>
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500">
+                <Lock size={16} />
+              </span>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Min 6 characters"
+                className="custom-input pl-10 text-sm"
+              />
+            </div>
+          </div>
+
           <button type="submit" disabled={loading} className="w-full btn-primary py-2.5 text-sm font-semibold">
-            {loading ? 'Requesting...' : 'Send Reset Link'}
+            {loading ? 'Resetting...' : 'Reset Password'}
           </button>
         </form>
 

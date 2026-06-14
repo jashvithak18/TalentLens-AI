@@ -169,41 +169,30 @@ exports.verifyEmail = async (req, res, next) => {
   }
 };
 
-// @desc    Forgot Password
+// @desc    Forgot Password (Direct reset)
 // @route   POST /api/auth/forgot-password
 // @access  Public
 exports.forgotPassword = async (req, res, next) => {
-  const { email } = req.body;
+  const { email, password } = req.body;
 
   try {
+    if (!email || !password) {
+      return res.status(400).json({ success: false, error: 'Please provide email and new password' });
+    }
+
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ success: false, error: 'No user with that email' });
     }
 
-    const resetToken = crypto.randomBytes(20).toString('hex');
-    user.resetPasswordToken = resetToken;
-    user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
+    // Directly update password
+    user.password = password;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    user.refreshToken = undefined; // Invalidate current sessions
     await user.save();
 
-    const resetUrl = `${req.protocol}://${req.get('host')}/api/auth/reset-password/${resetToken}`;
-    const message = `You are receiving this email because you requested a password reset. Please click the link below:\n\n ${resetUrl}`;
-
-    try {
-      await sendEmail({
-        email: user.email,
-        subject: 'Password Reset Token - TalentLens AI',
-        message,
-        html: `<p>Password Reset Token</p><a href="${resetUrl}">${resetUrl}</a>`
-      });
-
-      res.status(200).json({ success: true, message: 'Password reset link sent to email' });
-    } catch (err) {
-      user.resetPasswordToken = undefined;
-      user.resetPasswordExpire = undefined;
-      await user.save();
-      return res.status(500).json({ success: false, error: 'Email could not be sent' });
-    }
+    res.status(200).json({ success: true, message: 'Password updated successfully' });
   } catch (error) {
     next(error);
   }

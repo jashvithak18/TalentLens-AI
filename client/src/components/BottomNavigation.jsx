@@ -21,7 +21,6 @@ export const BottomNavigation = () => {
     { label: 'Home', path: '/candidate/dashboard', icon: LayoutDashboard },
     { label: 'Jobs', path: '/candidate/jobs', icon: Briefcase },
     { label: 'Graph', path: '/candidate/skills-graph', icon: Sliders },
-    { label: 'Tests', path: '/candidate/assessments', icon: Award },
     { label: 'Profile', path: '/candidate/profile', icon: User }
   ];
 

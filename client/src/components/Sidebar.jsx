@@ -33,13 +33,11 @@ const Sidebar = () => {
     dispatch(logout());
   };
 
-  // Define links based on Role
   const candidateLinks = [
     { label: 'Dashboard', path: '/candidate/dashboard', icon: LayoutDashboard },
     { label: 'My Profile', path: '/candidate/profile', icon: User },
     { label: 'Search Jobs', path: '/candidate/jobs', icon: Briefcase },
     { label: 'Applications', path: '/candidate/applications', icon: FileText },
-    { label: 'Assessments', path: '/candidate/assessments', icon: Award },
     { label: 'Skill Graph', path: '/candidate/skills-graph', icon: Sliders }
   ];
 

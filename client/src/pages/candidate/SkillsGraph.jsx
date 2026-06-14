@@ -60,7 +60,7 @@ const SkillsGraph = () => {
       <div className="w-full h-[600px] glass-panel border border-darkBorder rounded-2xl overflow-hidden relative glow-card">
         {nodes.length === 0 ? (
           <div className="absolute inset-0 flex items-center justify-center text-xs text-slate-500">
-            No graph connections detected. Please complete assessments or upload projects.
+            No graph connections detected. Please upload your resume/projects to populate your skills graph.
           </div>
         ) : (
           <ReactFlow
