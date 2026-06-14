@@ -43,6 +43,7 @@ const aiRoutes = require('./routes/aiRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const skillRoutes = require('./routes/skillRoutes');
 
 // Mount Routes
 app.use('/api/auth', authRoutes);
@@ -53,6 +54,7 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/skills', skillRoutes);
 
 // Error Handler
 app.use(errorHandler);

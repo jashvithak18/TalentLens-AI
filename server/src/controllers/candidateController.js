@@ -2,6 +2,7 @@ const CandidateProfile = require('../models/CandidateProfile');
 const User = require('../models/User');
 const Submission = require('../models/Submission');
 const CandidateScore = require('../models/CandidateScore');
+const Skill = require('../models/Skill');
 const { uploadToCloudinary } = require('../middleware/upload');
 const { aiParseResume, aiDetectHiddenSkills, aiGenerateCandidateDNA } = require('../utils/aiHelpers');
 const fs = require('fs');
@@ -35,7 +36,22 @@ exports.updateProfile = async (req, res, next) => {
     if (bio !== undefined) profile.bio = bio;
     if (location !== undefined) profile.location = location;
     if (socialLinks !== undefined) profile.socialLinks = socialLinks;
-    if (skills !== undefined) profile.skills = skills;
+    if (skills !== undefined) {
+      profile.skills = skills;
+      
+      // Dynamically add new skills to the global shared collection
+      for (const skillName of skills) {
+        const trimmedSkillName = skillName.trim();
+        if (trimmedSkillName) {
+          // Check if skill exists case-insensitively, if not add it
+          await Skill.findOneAndUpdate(
+            { name: { $regex: new RegExp(`^${trimmedSkillName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}$`, 'i') } },
+            { $setOnInsert: { name: trimmedSkillName } },
+            { upsert: true }
+          );
+        }
+      }
+    }
     if (isBlindModeEnabled !== undefined) profile.isBlindModeEnabled = isBlindModeEnabled;
 
     await profile.save();

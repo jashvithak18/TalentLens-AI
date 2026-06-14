@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../utils/api';
 import {
@@ -20,6 +20,14 @@ const CandidateProfile = () => {
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
+  // Skills state
+  const [selectedSkills, setSelectedSkills] = useState([]);
+  const [skillInput, setSkillInput] = useState('');
+  const [allSkills, setAllSkills] = useState([]);
+  const [filteredSkills, setFilteredSkills] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = React.useRef(null);
+
   // Fetch profile
   const { data, isLoading } = useQuery({
     queryKey: ['candidateProfile'],
@@ -28,6 +36,69 @@ const CandidateProfile = () => {
       return res.data;
     }
   });
+
+  // Load candidate skills on fetch
+  useEffect(() => {
+    if (data?.profile?.skills) {
+      setSelectedSkills(data.profile.skills);
+    }
+  }, [data]);
+
+  // Fetch all global skills
+  useEffect(() => {
+    const fetchAllSkills = async () => {
+      try {
+        const res = await api.get('/skills');
+        if (res.data?.success) {
+          setAllSkills(res.data.skills.map(s => s.name));
+        }
+      } catch (err) {
+        console.error('Failed to fetch skills list:', err);
+      }
+    };
+    fetchAllSkills();
+  }, []);
+
+  // Filter skills based on input
+  useEffect(() => {
+    if (!skillInput.trim()) {
+      setFilteredSkills([]);
+      return;
+    }
+    const term = skillInput.toLowerCase();
+    const filtered = allSkills.filter(s => 
+      s.toLowerCase().includes(term) && 
+      !selectedSkills.some(selected => selected.toLowerCase() === s.toLowerCase())
+    );
+    setFilteredSkills(filtered);
+  }, [skillInput, allSkills, selectedSkills]);
+
+  // Handle clicking outside the dropdown to close it
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleAddSkill = (skill) => {
+    const trimmed = skill.trim();
+    if (trimmed && !selectedSkills.some(s => s.toLowerCase() === trimmed.toLowerCase())) {
+      setSelectedSkills([...selectedSkills, trimmed]);
+      if (!allSkills.some(s => s.toLowerCase() === trimmed.toLowerCase())) {
+        setAllSkills([...allSkills, trimmed].sort());
+      }
+    }
+    setSkillInput('');
+    setShowDropdown(false);
+  };
+
+  const handleRemoveSkill = (skillToRemove) => {
+    setSelectedSkills(selectedSkills.filter(s => s !== skillToRemove));
+  };
 
   // Mutator for updating general details
   const updateGeneralMutation = useMutation({
@@ -92,12 +163,11 @@ const CandidateProfile = () => {
   const handleGeneralSubmit = (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
-    const skills = fd.get('skills').split(',').map(s => s.trim()).filter(Boolean);
     updateGeneralMutation.mutate({
       title: fd.get('title'),
       location: fd.get('location'),
       bio: fd.get('bio'),
-      skills
+      skills: selectedSkills
     });
   };
 
@@ -228,15 +298,71 @@ const CandidateProfile = () => {
               />
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-gray-300">Skills (Comma-separated)</label>
-              <input
-                type="text"
-                name="skills"
-                defaultValue={profile.skills?.join(', ') || ''}
-                placeholder="React, Node.js, Express, MongoDB"
-                className="custom-input text-xs"
-              />
+            <div className="space-y-1.5" ref={dropdownRef}>
+              <label className="text-xs font-semibold text-gray-300">Skills</label>
+              
+              {/* Selected Skills Badges */}
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {selectedSkills.map((skill, index) => (
+                  <div 
+                    key={index} 
+                    className="flex items-center bg-indigo-950/40 border border-indigo-500/30 text-indigo-300 text-xs px-2.5 py-1 rounded-full space-x-1.5"
+                  >
+                    <span>{skill}</span>
+                    <button 
+                      type="button" 
+                      onClick={() => handleRemoveSkill(skill)}
+                      className="text-indigo-400 hover:text-indigo-200 focus:outline-none font-bold text-[10px] cursor-pointer"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+                {selectedSkills.length === 0 && (
+                  <span className="text-xs text-textMuted italic">No skills added yet.</span>
+                )}
+              </div>
+
+              {/* Autocomplete Input */}
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Type a skill (e.g. React, Python...)"
+                  value={skillInput}
+                  onChange={(e) => {
+                    setSkillInput(e.target.value);
+                    setShowDropdown(true);
+                  }}
+                  onFocus={() => setShowDropdown(true)}
+                  className="custom-input text-xs w-full"
+                />
+                
+                {showDropdown && skillInput.trim() !== '' && (
+                  <div className="absolute z-50 w-full mt-1 bg-slate-900 border border-darkBorder rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                    {filteredSkills.map((skill, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => handleAddSkill(skill)}
+                        className="w-full text-left px-4 py-2 text-xs text-gray-300 hover:bg-indigo-900/30 hover:text-white transition-colors"
+                      >
+                        {skill}
+                      </button>
+                    ))}
+                    
+                    {/* Add Custom Skill Option */}
+                    {!allSkills.some(s => s.toLowerCase() === skillInput.trim().toLowerCase()) && (
+                      <button
+                        type="button"
+                        onClick={() => handleAddSkill(skillInput.trim())}
+                        className="w-full text-left px-4 py-2 text-xs text-indigo-400 font-semibold hover:bg-indigo-900/30 hover:text-indigo-300 transition-colors border-t border-darkBorder"
+                      >
+                        + Add "{skillInput.trim()}" as a new skill
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             <button type="submit" disabled={updateGeneralMutation.isPending} className="btn-primary text-xs font-semibold">
