@@ -4,7 +4,6 @@ import { useSelector } from 'react-redux';
 
 // Layout components
 import Navbar from './components/Navbar';
-import Sidebar from './components/Sidebar';
 import BottomNavigation from './components/BottomNavigation';
 import PublicHeader from './components/PublicHeader';
 
@@ -55,8 +54,7 @@ const App = () => {
       <div className="min-h-screen bg-darkBg text-slate-900 flex flex-col">
         {!token && <PublicHeader />}
         <div className="flex-1 flex">
-          {token && <Sidebar />}
-          <div className={`flex-1 flex flex-col min-w-0 ${token ? 'md:pl-64 pt-16 pb-16 md:pb-0' : ''}`}>
+          <div className={`flex-1 flex flex-col min-w-0 ${token ? 'pt-16 pb-16 md:pb-0' : ''}`}>
             {token && <Navbar />}
             <main className={`flex-1 ${token ? 'p-6 overflow-y-auto' : ''}`}>
             <Routes>
