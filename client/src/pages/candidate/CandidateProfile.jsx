@@ -190,6 +190,26 @@ const CandidateProfile = () => {
     }
   });
 
+  const deleteSubSectionMutation = useMutation({
+    mutationFn: async ({ type, id }) => {
+      const res = await api.delete(`/candidates/${type}/${id}`);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['candidateProfile'] });
+      showSuccess('Entry removed successfully!');
+    },
+    onError: (err) => {
+      setErrorMsg(err.response?.data?.error || 'Failed to remove entry.');
+    }
+  });
+
+  const handleDeleteEntry = (type, id) => {
+    if (window.confirm('Are you sure you want to delete this entry?')) {
+      deleteSubSectionMutation.mutate({ type, id });
+    }
+  };
+
   const showSuccess = (msg) => {
     setSuccessMsg(msg);
     setTimeout(() => setSuccessMsg(''), 3000);
@@ -628,10 +648,17 @@ const CandidateProfile = () => {
                         <div>
                           <p className="text-xs font-bold text-slate-800">{exp.role}</p>
                           <p className="text-[10px] text-indigo-600 mt-0.5">{exp.company}</p>
-                          <span className="text-[9px] text-slate-550">
+                          <span className="text-[9px] text-slate-555">
                             {new Date(exp.startDate).toLocaleDateString()} - {exp.current ? 'Present' : new Date(exp.endDate).toLocaleDateString()}
                           </span>
                         </div>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteEntry('experience', exp._id)}
+                          className="text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50 transition-colors"
+                        >
+                          <Trash size={14} />
+                        </button>
                       </div>
                       <p className="text-[11px] text-slate-600 mt-2 leading-relaxed">{exp.description}</p>
                     </div>
@@ -674,8 +701,17 @@ const CandidateProfile = () => {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {profile.projects?.map((proj, idx) => (
-                    <div key={idx} className="bg-slate-50 border border-slate-200 rounded-lg p-3.5">
-                      <p className="text-xs font-bold text-slate-800">{proj.title}</p>
+                    <div key={idx} className="bg-slate-50 border border-slate-200 rounded-lg p-3.5 relative">
+                      <div className="flex justify-between items-start mb-1">
+                        <p className="text-xs font-bold text-slate-800">{proj.title}</p>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteEntry('projects', proj._id)}
+                          className="text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50 transition-colors"
+                        >
+                          <Trash size={14} />
+                        </button>
+                      </div>
                       <p className="text-[11px] text-slate-600 mt-1.5 line-clamp-2">{proj.description}</p>
                       <div className="flex flex-wrap gap-1 mt-3">
                         {proj.technologies?.map((tech, tIdx) => (
@@ -735,18 +771,27 @@ const CandidateProfile = () => {
                 <div className="space-y-3">
                   {profile.education?.map((edu, idx) => (
                     <div key={idx} className="bg-slate-50 border border-slate-200 rounded-lg p-3.5 relative">
-                      <div>
-                        <p className="text-xs font-bold text-slate-800">{edu.degree} in {edu.fieldOfStudy || 'General study'}</p>
-                        <p className="text-[10px] text-indigo-600 mt-0.5">{edu.institution}</p>
-                        <span className="text-[9px] text-slate-550 block mt-0.5">
-                          {edu.startDate ? new Date(edu.startDate).toLocaleDateString() : ''} - {edu.endDate ? new Date(edu.endDate).toLocaleDateString() : 'Present'}
-                        </span>
-                        {edu.grade && (
-                          <span className="inline-block mt-2 text-[10px] bg-slate-200 text-slate-750 px-2 py-0.5 rounded font-medium">
-                            Grade: {edu.grade}
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="text-xs font-bold text-slate-800">{edu.degree} in {edu.fieldOfStudy || 'General study'}</p>
+                          <p className="text-[10px] text-indigo-600 mt-0.5">{edu.institution}</p>
+                          <span className="text-[9px] text-slate-555 block mt-0.5">
+                            {edu.startDate ? new Date(edu.startDate).toLocaleDateString() : ''} - {edu.endDate ? new Date(edu.endDate).toLocaleDateString() : 'Present'}
                           </span>
-                        )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteEntry('education', edu._id)}
+                          className="text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50 transition-colors"
+                        >
+                          <Trash size={14} />
+                        </button>
                       </div>
+                      {edu.grade && (
+                        <span className="inline-block mt-2 text-[10px] bg-slate-200 text-slate-750 px-2 py-0.5 rounded font-medium">
+                          Grade: {edu.grade}
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -807,7 +852,16 @@ const CandidateProfile = () => {
                   {profile.certifications?.map((cert, idx) => (
                     <div key={idx} className="bg-slate-50 border border-slate-200 rounded-lg p-3.5 flex flex-col justify-between">
                       <div>
-                        <p className="text-xs font-bold text-slate-800">{cert.name}</p>
+                        <div className="flex justify-between items-start mb-1">
+                          <p className="text-xs font-bold text-slate-800">{cert.name}</p>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteEntry('certifications', cert._id)}
+                            className="text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50 transition-colors"
+                          >
+                            <Trash size={14} />
+                          </button>
+                        </div>
                         <p className="text-[10px] text-indigo-600 mt-0.5">{cert.issuer}</p>
                         <span className="text-[9px] text-slate-550 block mt-0.5">
                           Issued: {cert.issueDate ? new Date(cert.issueDate).toLocaleDateString() : 'N/A'} 

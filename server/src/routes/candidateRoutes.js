@@ -8,7 +8,8 @@ const {
   addProject,
   addCertification,
   uploadAvatar,
-  getGraphs
+  getGraphs,
+  deleteSubSection
 } = require('../controllers/candidateController');
 const { protect } = require('../middleware/auth');
 const authorize = require('../middleware/roleGuard');
@@ -24,6 +25,7 @@ router.post('/experience', protect, addExperience);
 router.post('/education', protect, addEducation);
 router.post('/projects', protect, addProject);
 router.post('/certifications', protect, upload.single('pdf'), addCertification);
+router.delete('/:type/:id', protect, deleteSubSection);
 router.get('/graphs/:candidateId?', protect, getGraphs);
 
 module.exports = router;

@@ -367,3 +367,34 @@ exports.getGraphs = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.deleteSubSection = async (req, res, next) => {
+  const { type, id } = req.params;
+  const validTypes = ['experience', 'education', 'projects', 'certifications'];
+  
+  if (!validTypes.includes(type)) {
+    return res.status(400).json({ success: false, error: 'Invalid sub-section type' });
+  }
+
+  try {
+    const profile = await CandidateProfile.findOne({ user: req.user.id });
+    if (!profile) {
+      return res.status(404).json({ success: false, error: 'Profile not found' });
+    }
+
+    // Pull the sub-document by its _id
+    profile[type].pull({ _id: id });
+    await profile.save();
+
+    // If type is projects or experience, recalculate inferred skills
+    if (type === 'projects' || type === 'experience') {
+      const inferred = await aiDetectHiddenSkills(profile);
+      profile.inferredSkills = inferred;
+      await profile.save();
+    }
+
+    res.status(200).json({ success: true, profile });
+  } catch (error) {
+    next(error);
+  }
+};
