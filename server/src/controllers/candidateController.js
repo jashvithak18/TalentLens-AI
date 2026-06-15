@@ -8,6 +8,7 @@ const { uploadToCloudinary } = require('../middleware/upload');
 const { aiParseResume, aiDetectHiddenSkills, aiGenerateCandidateDNA } = require('../utils/aiHelpers');
 const fs = require('fs');
 const pdfParse = require('pdf-parse');
+const mammoth = require('mammoth');
 
 // Get candidate profile
 exports.getProfile = async (req, res, next) => {
@@ -105,12 +106,20 @@ exports.uploadResume = async (req, res, next) => {
         const dataBuffer = fs.readFileSync(req.file.path);
         const pdfData = await pdfParse(dataBuffer);
         resumeText += pdfData.text;
-      } else {
+      } else if (
+        req.file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || 
+        req.file.path.endsWith('.docx')
+      ) {
+        const docxResult = await mammoth.extractRawText({ path: req.file.path });
+        resumeText += docxResult.value;
+      } else if (req.file.mimetype === 'text/plain' || req.file.path.endsWith('.txt')) {
         resumeText += fs.readFileSync(req.file.path, 'utf8');
+      } else {
+        throw new Error('Unsupported file format. Please upload your resume in PDF or DOCX format.');
       }
     } catch (readErr) {
       console.error('Error reading/parsing resume file:', readErr);
-      resumeText += "Simulated text readout from resume file.";
+      throw new Error(`Failed to extract text from resume: ${readErr.message}`);
     }
 
     // 2. Upload to Cloudinary (or fallback to local relative route)

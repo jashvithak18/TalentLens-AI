@@ -117,8 +117,8 @@ exports.aiParseResume = async (resumeText) => {
     if (!resultText) throw new Error('AI returned empty response');
     return cleanJsonResponse(resultText);
   } catch (error) {
-    console.error('aiParseResume error (falling back to mock data):', error);
-    return fallbackData;
+    console.error('aiParseResume error:', error);
+    throw error;
   }
 };
 
