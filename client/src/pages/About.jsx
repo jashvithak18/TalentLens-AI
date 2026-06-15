@@ -64,7 +64,6 @@ const CountUp = ({ target, suffix = '', duration = 2000 }) => {
 // ─── Enhanced Animated Radar Chart ───────────────────────────────────────────
 const PremiumRadarChart = ({ metrics, size = 240, animated = true }) => {
   const [hovered, setHovered] = useState(null);
-  const chartInView = useInView(useRef(null), { once: true });
   const [progress, setProgress] = useState(animated ? 0 : 1);
 
   useEffect(() => {
@@ -487,7 +486,9 @@ const ScrollTellingSection = () => {
   const [currentScene, setCurrentScene] = useState(0);
 
   useMotionValueEvent(scene, "change", (latest) => {
-    setCurrentScene(Math.round(latest));
+    const rounded = Math.round(latest);
+    const clamped = Math.max(0, Math.min(5, rounded));
+    setCurrentScene(clamped);
   });
 
   const sceneContent = [
@@ -699,26 +700,23 @@ const ScrollTellingSection = () => {
         {/* Scene content */}
         <div className="flex-1 flex items-start justify-center px-6 relative z-10" style={{ paddingTop: '1rem' }}>
           <div className="w-full max-w-2xl">
-            <AnimatePresence mode="wait">
-              <motion.div key={currentScene}
-                initial={{ opacity: 0, y: 20, filter: 'blur(8px)' }}
-                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                exit={{ opacity: 0, y: -20, filter: 'blur(8px)' }}
-                transition={{ duration: 0.5 }}>
-                <div className="text-center mb-8">
-                  <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-indigo-300 text-xs font-bold mb-3">
-                    Scene {currentScene + 1} of {sceneContent.length}
-                  </div>
-                  <h3 className="text-2xl font-extrabold text-white font-jakarta">
-                    {sceneContent[currentScene]?.title}
-                  </h3>
-                  <p className="text-slate-400 text-sm mt-1">
-                    {sceneContent[currentScene]?.subtitle}
-                  </p>
+            <motion.div key={currentScene}
+              initial={{ opacity: 0, y: 15, filter: 'blur(4px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              transition={{ duration: 0.3 }}>
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-indigo-300 text-xs font-bold mb-3">
+                  Scene {currentScene + 1} of {sceneContent.length}
                 </div>
-                {sceneContent[currentScene]?.content}
-              </motion.div>
-            </AnimatePresence>
+                <h3 className="text-2xl font-extrabold text-white font-jakarta">
+                  {sceneContent[currentScene]?.title}
+                </h3>
+                <p className="text-slate-400 text-sm mt-1">
+                  {sceneContent[currentScene]?.subtitle}
+                </p>
+              </div>
+              {sceneContent[currentScene]?.content}
+            </motion.div>
           </div>
         </div>
 
@@ -770,9 +768,7 @@ const CopilotDemo = () => {
     return () => clearInterval(typingInterval);
   }, [inView]);
 
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, typing]);
+  // Prevent auto-scrolling browser window on load/message additions
 
   const candidates = [
     { name: 'Priya Sharma', role: 'Full-Stack Dev', score: 94, skills: ['React', 'Node', 'Mongo'] },
@@ -880,9 +876,6 @@ const CopilotDemo = () => {
 
 // ─── Candidate Battle Section ─────────────────────────────────────────────────
 const CandidateBattle = () => {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: '-80px' });
-
   const metrics = [
     { label: 'Assessments', sarah: 92, alex: 88 },
     { label: 'Code Challenge', sarah: 95, alex: 80 },
@@ -892,14 +885,15 @@ const CandidateBattle = () => {
   ];
 
   return (
-    <div ref={ref} className="max-w-5xl mx-auto">
+    <div className="max-w-5xl mx-auto">
       <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
         {/* VS Header */}
         <div className="grid grid-cols-3 gap-6 items-center mb-8">
           {/* Candidate A */}
           <motion.div
             initial={{ x: -30, opacity: 0 }}
-            animate={inView ? { x: 0, opacity: 1 } : {}}
+            whileInView={{ x: 0, opacity: 1 }}
+            viewport={{ once: true }}
             transition={{ duration: 0.6, type: 'spring' }}
             className="text-center">
             <div className="w-20 h-20 rounded-full bg-indigo-50 border-2 border-indigo-300 flex items-center justify-center font-extrabold text-indigo-700 mx-auto text-xl shadow-sm mb-3">
@@ -919,7 +913,8 @@ const CandidateBattle = () => {
             </div>
             <motion.div
               initial={{ scale: 0, opacity: 0 }}
-              animate={inView ? { scale: 1, opacity: 1 } : {}}
+              whileInView={{ scale: 1, opacity: 1 }}
+              viewport={{ once: true }}
               transition={{ delay: 0.8, duration: 0.5, type: 'spring' }}
               className="bg-gradient-to-br from-indigo-600 to-violet-600 rounded-2xl p-4 text-white text-center shadow-lg">
               <div className="text-[10px] font-bold text-indigo-200 uppercase tracking-widest mb-1">AI Recommendation</div>
@@ -931,7 +926,8 @@ const CandidateBattle = () => {
           {/* Candidate B */}
           <motion.div
             initial={{ x: 30, opacity: 0 }}
-            animate={inView ? { x: 0, opacity: 1 } : {}}
+            whileInView={{ x: 0, opacity: 1 }}
+            viewport={{ once: true }}
             transition={{ duration: 0.6, type: 'spring' }}
             className="text-center">
             <div className="w-20 h-20 rounded-full bg-blue-50 border-2 border-blue-200 flex items-center justify-center font-extrabold text-blue-600 mx-auto text-xl shadow-sm mb-3">
@@ -961,7 +957,8 @@ const CandidateBattle = () => {
                     <motion.div
                       className="h-full bg-indigo-500 rounded-full ml-auto"
                       initial={{ width: 0 }}
-                      animate={inView ? { width: `${m.sarah}%` } : { width: 0 }}
+                      whileInView={{ width: `${m.sarah}%` }}
+                      viewport={{ once: true }}
                       transition={{ duration: 1.2, delay: i * 0.1, ease: 'easeOut' }}
                       style={{ marginLeft: 'auto' }} />
                   </div>
@@ -973,7 +970,8 @@ const CandidateBattle = () => {
                     <motion.div
                       className="h-full bg-blue-300 rounded-full"
                       initial={{ width: 0 }}
-                      animate={inView ? { width: `${m.alex}%` } : { width: 0 }}
+                      whileInView={{ width: `${m.alex}%` }}
+                      viewport={{ once: true }}
                       transition={{ duration: 1.2, delay: i * 0.1, ease: 'easeOut' }} />
                   </div>
                 </div>
@@ -1145,15 +1143,13 @@ const BentoGrid = () => {
 
 // ─── Resume Transformation ─────────────────────────────────────────────────────
 const ResumeTransformation = () => {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: '-80px' });
-
   return (
-    <div ref={ref} className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center max-w-5xl mx-auto">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center max-w-5xl mx-auto">
       {/* Before — Raw Resume */}
       <motion.div
         initial={{ opacity: 0, x: -30 }}
-        animate={inView ? { opacity: 1, x: 0 } : {}}
+        whileInView={{ opacity: 1, x: 0 }}
+        viewport={{ once: true }}
         transition={{ duration: 0.6 }}
         className="relative">
         <div className="text-xs font-bold text-red-500 uppercase tracking-widest mb-3 flex items-center gap-2">
@@ -1185,7 +1181,8 @@ const ResumeTransformation = () => {
       <div className="hidden lg:block absolute left-1/2 -translate-x-1/2 z-10">
         <motion.div
           initial={{ opacity: 0, scale: 0 }}
-          animate={inView ? { opacity: 1, scale: 1 } : {}}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
           transition={{ delay: 0.4, type: 'spring' }}
           className="w-12 h-12 rounded-full bg-indigo-600 shadow-lg flex items-center justify-center">
           <ArrowRight className="h-5 w-5 text-white" />
@@ -1195,7 +1192,8 @@ const ResumeTransformation = () => {
       {/* After — Talent Blueprint */}
       <motion.div
         initial={{ opacity: 0, x: 30 }}
-        animate={inView ? { opacity: 1, x: 0 } : {}}
+        whileInView={{ opacity: 1, x: 0 }}
+        viewport={{ once: true }}
         transition={{ duration: 0.6, delay: 0.2 }}
         className="relative">
         <div className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-3 flex items-center gap-2">
@@ -1228,7 +1226,8 @@ const ResumeTransformation = () => {
                 <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                   <motion.div className={`h-full ${m.color} rounded-full`}
                     initial={{ width: 0 }}
-                    animate={inView ? { width: `${m.value}%` } : { width: 0 }}
+                    whileInView={{ width: `${m.value}%` }}
+                    viewport={{ once: true }}
                     transition={{ duration: 1, delay: 0.5 + i * 0.1, ease: 'easeOut' }} />
                 </div>
               </div>
