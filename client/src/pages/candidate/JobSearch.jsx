@@ -26,6 +26,7 @@ const JobSearch = ({ defaultTab = 'search' }) => {
   const [type, setType] = useState('');
   const [coverLetter, setCoverLetter] = useState('');
   const [selectedJob, setSelectedJob] = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -58,10 +59,9 @@ const JobSearch = ({ defaultTab = 'search' }) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-applications'] });
-      setSuccessMsg('Applied successfully! AI matching has initialized in the background.');
+      setShowSuccessModal(true);
       setSelectedJob(null);
       setCoverLetter('');
-      setTimeout(() => setSuccessMsg(''), 4000);
     },
     onError: (err) => {
       setErrorMsg(err.response?.data?.error || 'Failed to submit application.');
@@ -321,6 +321,27 @@ const JobSearch = ({ defaultTab = 'search' }) => {
               </button>
             </div>
           </form>
+        </div>
+      )}
+      {/* Success Modal Pop-up */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+          <div className="w-full max-w-sm bg-white border border-slate-200 rounded-2xl p-6 text-center space-y-4 shadow-xl transform scale-100 transition-all">
+            <div className="mx-auto w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600">
+              <CheckCircle size={28} />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-base font-extrabold text-slate-900 font-jakarta">Application Submitted</h3>
+              <p className="text-xs text-slate-500 font-semibold">Your application has been submitted successfully!</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowSuccessModal(false)}
+              className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-xs font-bold rounded-xl text-white transition-all shadow-md shadow-indigo-600/10"
+            >
+              Great, thank you!
+            </button>
+          </div>
         </div>
       )}
     </div>
