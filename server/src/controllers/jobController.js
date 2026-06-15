@@ -3,6 +3,7 @@ const Application = require('../models/Application');
 const CandidateProfile = require('../models/CandidateProfile');
 const AIRanking = require('../models/AIRanking');
 const Notification = require('../models/Notification');
+const ActivityLog = require('../models/ActivityLog');
 const { aiEvaluateCandidateFit } = require('../utils/aiHelpers');
 
 // Create Job
