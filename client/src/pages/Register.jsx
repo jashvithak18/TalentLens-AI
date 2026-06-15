@@ -327,14 +327,15 @@ const Register = () => {
 
             <div className="space-y-2.5">
               {[
-                { name: 'Sarah Connor', email: 'sarah@skynet.com', role: 'Recruiter', initials: 'SC' },
-                { name: 'Alex Rivera', email: 'alex.rivera@example.com', role: 'Candidate', initials: 'AR' }
+                { name: 'Jashvi Thakkar', email: 'jashvithak00@gmail.com', role: 'Recruiter', initials: 'JT' },
+                { name: 'Rohan Sharma', email: 'rohan.sharma@example.com', role: 'Candidate', initials: 'RS' },
+                { name: 'Anjali Rao', email: 'anjali.rao@example.com', role: 'Candidate', initials: 'AR' }
               ].map((acc, idx) => (
                 <button
                   key={idx}
                   type="button"
                   onClick={() => handleGoogleLogin(acc.email)}
-                  className="w-full text-left p-3 border border-slate-100 hover:border-brandPrimary/30 hover:bg-slate-50 rounded-xl transition-all flex items-center gap-3"
+                  className="w-full text-left p-3 border border-slate-150 hover:border-brandPrimary/30 hover:bg-slate-50 rounded-xl transition-all flex items-center gap-3"
                 >
                   <div className="w-10 h-10 rounded-full bg-brandPrimary/5 border border-brandPrimary/10 flex items-center justify-center font-bold text-brandPrimary text-xs shrink-0">
                     {acc.initials}
