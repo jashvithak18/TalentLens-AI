@@ -97,7 +97,7 @@ const App = () => {
                 path="/candidate/jobs"
                 element={
                   <ProtectedRoute allowedRoles={['candidate']}>
-                    <JobSearch />
+                    <JobSearch key="search" defaultTab="search" />
                   </ProtectedRoute>
                 }
               />
@@ -105,7 +105,7 @@ const App = () => {
                 path="/candidate/applications"
                 element={
                   <ProtectedRoute allowedRoles={['candidate']}>
-                    <JobSearch defaultTab="applications" />
+                    <JobSearch key="applications" defaultTab="applications" />
                   </ProtectedRoute>
                 }
               />

@@ -10,6 +10,42 @@ const fs = require('fs');
 const pdfParse = require('pdf-parse');
 const mammoth = require('mammoth');
 
+// Helper to recalculate inferred skills, DNA scores, and behavioral metrics in the background
+const triggerBackgroundRecalculation = (candidateId, profileId) => {
+  (async () => {
+    try {
+      // 1. Fetch current profile
+      const profile = await CandidateProfile.findById(profileId);
+      if (!profile) return;
+
+      // 2. Recalculate inferred skills first
+      const inferred = await aiDetectHiddenSkills(profile);
+      await CandidateProfile.updateOne({ _id: profileId }, { inferredSkills: inferred });
+
+      // 3. Get updated profile with new inferredSkills
+      const updatedProfile = await CandidateProfile.findById(profileId);
+
+      // 4. Fetch submissions and activities
+      const submissions = await Submission.find({ candidate: candidateId });
+      const activities = await ActivityLog.find({ user: candidateId });
+
+      // 5. Generate and save candidate DNA/behavioral scores
+      const dnaData = await aiGenerateCandidateDNA(updatedProfile, submissions, activities);
+      await CandidateScore.findOneAndUpdate(
+        { candidate: candidateId },
+        {
+          dna: dnaData.dna,
+          behavioral: dnaData.behavioral,
+          potential: dnaData.potential
+        },
+        { upsert: true }
+      );
+    } catch (err) {
+      console.error('Background recalculation error:', err);
+    }
+  })();
+};
+
 // Get candidate profile
 exports.getProfile = async (req, res, next) => {
   try {
@@ -72,27 +108,8 @@ exports.updateProfile = async (req, res, next) => {
 
     res.status(200).json({ success: true, profile });
 
-    // Trigger AI DNA calculation in background if skills change
-    if (skills !== undefined) {
-      (async () => {
-        try {
-          const submissions = await Submission.find({ candidate: req.user.id });
-          const activities = await ActivityLog.find({ user: req.user.id });
-          const dnaData = await aiGenerateCandidateDNA(profile, submissions, activities);
-          await CandidateScore.findOneAndUpdate(
-            { candidate: req.user.id },
-            {
-              dna: dnaData.dna,
-              behavioral: dnaData.behavioral,
-              potential: dnaData.potential
-            },
-            { upsert: true }
-          );
-        } catch (bgErr) {
-          console.error('Background AI DNA calculation error:', bgErr);
-        }
-      })();
-    }
+    // Trigger background recalculation for skills, DNA, and behavioral metrics
+    triggerBackgroundRecalculation(req.user.id, profile._id);
   } catch (error) {
     next(error);
   }
@@ -264,6 +281,7 @@ exports.addExperience = async (req, res, next) => {
     profile.experience.push(req.body);
     await profile.save();
     res.status(200).json({ success: true, profile });
+    triggerBackgroundRecalculation(req.user.id, profile._id);
   } catch (error) {
     next(error);
   }
@@ -275,6 +293,7 @@ exports.addEducation = async (req, res, next) => {
     profile.education.push(req.body);
     await profile.save();
     res.status(200).json({ success: true, profile });
+    triggerBackgroundRecalculation(req.user.id, profile._id);
   } catch (error) {
     next(error);
   }
@@ -287,16 +306,7 @@ exports.addProject = async (req, res, next) => {
     await profile.save();
     
     res.status(200).json({ success: true, profile });
-
-    // Recalculate inferred skills in background when adding a project
-    (async () => {
-      try {
-        const inferred = await aiDetectHiddenSkills(profile);
-        await CandidateProfile.updateOne({ _id: profile._id }, { inferredSkills: inferred });
-      } catch (bgErr) {
-        console.error('Background inferred skills calculation error:', bgErr);
-      }
-    })();
+    triggerBackgroundRecalculation(req.user.id, profile._id);
   } catch (error) {
     next(error);
   }
@@ -314,6 +324,7 @@ exports.addCertification = async (req, res, next) => {
     profile.certifications.push(certData);
     await profile.save();
     res.status(200).json({ success: true, profile });
+    triggerBackgroundRecalculation(req.user.id, profile._id);
   } catch (error) {
     next(error);
   }
@@ -478,18 +489,7 @@ exports.deleteSubSection = async (req, res, next) => {
     await profile.save();
 
     res.status(200).json({ success: true, profile });
-
-    // If type is projects or experience, recalculate inferred skills in background
-    if (type === 'projects' || type === 'experience') {
-      (async () => {
-        try {
-          const inferred = await aiDetectHiddenSkills(profile);
-          await CandidateProfile.updateOne({ _id: profile._id }, { inferredSkills: inferred });
-        } catch (bgErr) {
-          console.error('Background inferred skills calculation error:', bgErr);
-        }
-      })();
-    }
+    triggerBackgroundRecalculation(req.user.id, profile._id);
   } catch (error) {
     next(error);
   }
@@ -534,17 +534,7 @@ exports.updateSubSection = async (req, res, next) => {
     await profile.save();
 
     res.status(200).json({ success: true, profile });
-
-    if (type === 'projects' || type === 'experience') {
-      (async () => {
-        try {
-          const inferred = await aiDetectHiddenSkills(profile);
-          await CandidateProfile.updateOne({ _id: profile._id }, { inferredSkills: inferred });
-        } catch (bgErr) {
-          console.error('Background inferred skills calculation error:', bgErr);
-        }
-      })();
-    }
+    triggerBackgroundRecalculation(req.user.id, profile._id);
   } catch (error) {
     next(error);
   }

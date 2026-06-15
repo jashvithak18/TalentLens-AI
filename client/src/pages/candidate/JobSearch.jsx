@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../utils/api';
 import {
@@ -16,6 +16,11 @@ import {
 const JobSearch = ({ defaultTab = 'search' }) => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState(defaultTab);
+  
+  useEffect(() => {
+    setActiveTab(defaultTab);
+  }, [defaultTab]);
+
   const [search, setSearch] = useState('');
   const [location, setLocation] = useState('');
   const [type, setType] = useState('');
