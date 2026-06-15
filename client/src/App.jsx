@@ -59,12 +59,51 @@ const App = () => {
           {token && <Navbar />}
           <main className={`flex-1 ${token && !isAboutPage ? 'p-6 overflow-y-auto' : ''}`}>
           <Routes>
-              {/* About Page as permanent Home Page */}
-              <Route path="/" element={<About />} />
+              {/* About Page as permanent Home Page (redirects to dashboard if logged in) */}
+              <Route 
+                path="/" 
+                element={
+                  !token ? (
+                    <About />
+                  ) : user?.role === 'candidate' ? (
+                    <Navigate to="/candidate/dashboard" replace />
+                  ) : user?.role === 'recruiter' ? (
+                    <Navigate to="/recruiter/dashboard" replace />
+                  ) : (
+                    <Navigate to="/admin/dashboard" replace />
+                  )
+                } 
+              />
 
               {/* Auth Routes */}
-              <Route path="/login" element={!token ? <Login /> : <Navigate to="/" />} />
-              <Route path="/register" element={!token ? <Register /> : <Navigate to="/" />} />
+              <Route 
+                path="/login" 
+                element={
+                  !token ? (
+                    <Login />
+                  ) : user?.role === 'candidate' ? (
+                    <Navigate to="/candidate/dashboard" replace />
+                  ) : user?.role === 'recruiter' ? (
+                    <Navigate to="/recruiter/dashboard" replace />
+                  ) : (
+                    <Navigate to="/admin/dashboard" replace />
+                  )
+                } 
+              />
+              <Route 
+                path="/register" 
+                element={
+                  !token ? (
+                    <Register />
+                  ) : user?.role === 'candidate' ? (
+                    <Navigate to="/candidate/dashboard" replace />
+                  ) : user?.role === 'recruiter' ? (
+                    <Navigate to="/recruiter/dashboard" replace />
+                  ) : (
+                    <Navigate to="/admin/dashboard" replace />
+                  )
+                } 
+              />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password/:token" element={<ResetPassword />} />
 
