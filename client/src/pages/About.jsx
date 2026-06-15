@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, useScroll, useTransform, useInView, AnimatePresence, useMotionValue, useSpring } from 'framer-motion';
+import { motion, useScroll, useTransform, useInView, AnimatePresence, useMotionValue, useSpring, useMotionValueEvent } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { 
@@ -486,9 +486,9 @@ const ScrollTellingSection = () => {
   const scene = useTransform(scrollYProgress, [0, 0.17, 0.34, 0.5, 0.67, 0.84, 1], [0, 1, 2, 3, 4, 5, 5]);
   const [currentScene, setCurrentScene] = useState(0);
 
-  useEffect(() => {
-    return scene.onChange(v => setCurrentScene(Math.round(v)));
-  }, [scene]);
+  useMotionValueEvent(scene, "change", (latest) => {
+    setCurrentScene(Math.round(latest));
+  });
 
   const sceneContent = [
     {
@@ -1332,38 +1332,11 @@ export const About = () => {
                   Go to Dashboard <ArrowRight className="h-4 w-4" />
                 </button>
               ) : (
-                <>
-                  <button onClick={() => navigate('/register')}
-                    className="btn-primary py-3.5 px-7 text-sm font-bold magnetic-btn shadow-lg shadow-indigo-500/20">
-                    Get Started Free <ArrowRight className="h-4 w-4" />
-                  </button>
-                  <button onClick={() => navigate('/register')}
-                    className="btn-secondary py-3.5 px-7 text-sm font-bold magnetic-btn flex items-center gap-2">
-                    <Play className="h-4 w-4" /> Watch Demo
-                  </button>
-                </>
+                <button onClick={() => navigate('/register')}
+                  className="btn-primary py-3.5 px-7 text-sm font-bold magnetic-btn shadow-lg shadow-indigo-500/20">
+                  Get Started Free <ArrowRight className="h-4 w-4" />
+                </button>
               )}
-            </motion.div>
-
-            {/* Social proof mini bar */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.7 }}
-              className="flex items-center gap-4 pt-2">
-              <div className="flex -space-x-2.5">
-                {['AK', 'MS', 'RV', 'PK', 'AS'].map((av, i) => (
-                  <div key={i} className="w-8 h-8 rounded-full bg-white border-2 border-white shadow text-[10px] font-bold text-slate-600 flex items-center justify-center">
-                    {av}
-                  </div>
-                ))}
-              </div>
-              <div className="text-xs text-slate-500">
-                <span className="font-bold text-slate-800">2,400+</span> recruiters trust TalentLens
-                <div className="flex gap-0.5 mt-0.5">
-                  {[1,2,3,4,5].map(i => <Star key={i} className="h-3 w-3 fill-amber-400 text-amber-400" />)}
-                </div>
-              </div>
             </motion.div>
           </div>
 
@@ -1386,30 +1359,7 @@ export const About = () => {
         </motion.div>
       </section>
 
-      {/* ──────────────── STATS BAR ──────────────── */}
-      <section className="py-16 border-y border-slate-200 bg-white">
-        <div className="max-w-5xl mx-auto px-6 grid grid-cols-2 lg:grid-cols-4 gap-8">
-          {stats.map((s, i) => {
-            const Icon = s.icon;
-            return (
-              <motion.div key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="text-center">
-                <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center mx-auto mb-3">
-                  <Icon className="h-5 w-5 text-indigo-600" />
-                </div>
-                <div className="text-3xl font-extrabold text-slate-900 font-jakarta">
-                  <CountUp target={s.value} suffix={s.suffix} />
-                </div>
-                <div className="text-xs text-slate-400 font-semibold mt-1">{s.label}</div>
-              </motion.div>
-            );
-          })}
-        </div>
-      </section>
+
 
       {/* ──────────────── SCROLL-TELLING ──────────────── */}
       <ScrollTellingSection />
@@ -1738,51 +1688,7 @@ export const About = () => {
         </div>
       </section>
 
-      {/* ──────────────── TESTIMONIALS ──────────────── */}
-      <section className="py-24 px-6">
-        <div className="max-w-7xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center max-w-2xl mx-auto mb-16 space-y-4">
-            <h2 className="text-4xl font-extrabold text-slate-900 font-jakarta tracking-tight">
-              Loved by Recruiting Leaders
-            </h2>
-            <p className="text-slate-500">Hear from teams that transformed their hiring with TalentLens.</p>
-          </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {[
-              { name: 'Jessica Mercer', role: 'Head of Talent, Ashby', quote: 'We replaced manual screening pipelines with TalentLens and saved 40+ hours per job post. Blind Mode is a game-changer.', avatar: 'JM', color: 'from-indigo-100 to-indigo-50' },
-              { name: 'Robert Chen', role: 'VP Engineering, Vercel', quote: 'VM-sandboxed coding tests let us verify candidate skills instantly. Real skills, not memorized algorithms.', avatar: 'RC', color: 'from-cyan-100 to-cyan-50' },
-              { name: 'Aria Sterling', role: 'Director of HR, Linear', quote: 'No more keyword matching. TalentLens discovers hidden potential our team would have skipped entirely.', avatar: 'AS', color: 'from-violet-100 to-violet-50' },
-            ].map((t, idx) => (
-              <motion.div key={idx}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
-                whileHover={{ y: -4 }}
-                className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all">
-                <div className="flex gap-1 mb-4">
-                  {[1,2,3,4,5].map(i => <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />)}
-                </div>
-                <p className="text-sm text-slate-600 leading-relaxed italic mb-6">"{t.quote}"</p>
-                <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
-                  <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${t.color} border border-white shadow flex items-center justify-center font-bold text-xs text-indigo-700`}>
-                    {t.avatar}
-                  </div>
-                  <div>
-                    <h5 className="text-xs font-bold text-slate-900 font-jakarta">{t.name}</h5>
-                    <p className="text-[10px] text-slate-400 mt-0.5">{t.role}</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ──────────────── FINAL CTA ──────────────── */}
       <section className="relative py-28 px-6 overflow-hidden bg-slate-950">
