@@ -63,15 +63,44 @@ const upload = multer({
 });
 
 // Helper function to upload local file to Cloudinary (if configured)
-const uploadToCloudinary = async (filePath, folder = 'talentlens') => {
+const uploadToCloudinary = async (filePath, folder = 'talentlens', mimetype = null) => {
   if (!isCloudinaryConfigured()) {
-    // If not configured, return the local file path as the URL
-    // Convert to relative URL for frontend consumption
-    const relativePath = filePath.split(path.sep).join('/').split('/public')[1] || filePath;
-    return {
-      url: relativePath,
-      public_id: path.basename(filePath)
-    };
+    try {
+      // Determine mimetype if not provided
+      let resolvedMimetype = mimetype;
+      if (!resolvedMimetype) {
+        const ext = path.extname(filePath).toLowerCase();
+        if (ext === '.pdf') resolvedMimetype = 'application/pdf';
+        else if (ext === '.docx') resolvedMimetype = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        else if (ext === '.doc') resolvedMimetype = 'application/msword';
+        else if (ext === '.jpg' || ext === '.jpeg') resolvedMimetype = 'image/jpeg';
+        else if (ext === '.png') resolvedMimetype = 'image/png';
+        else if (ext === '.webp') resolvedMimetype = 'image/webp';
+        else resolvedMimetype = 'application/octet-stream';
+      }
+
+      // Ephemeral disk fallback: convert local file to a Base64 Data URL to persist in MongoDB
+      const fileBuffer = fs.readFileSync(filePath);
+      const base64Data = fileBuffer.toString('base64');
+      const dataUrl = `data:${resolvedMimetype};base64,${base64Data}`;
+      
+      // Clean up local file immediately to free disk space
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+      
+      return {
+        url: dataUrl,
+        public_id: path.basename(filePath)
+      };
+    } catch (err) {
+      console.error('Error creating base64 data URL:', err);
+      const relativePath = filePath.split(path.sep).join('/').split('/public')[1] || filePath;
+      return {
+        url: relativePath,
+        public_id: path.basename(filePath)
+      };
+    }
   }
 
   try {

@@ -18,7 +18,7 @@ import {
 
 const getResumeUrl = (url) => {
   if (!url) return '';
-  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
   let apiBase = import.meta.env.VITE_API_URL;
   if (!apiBase) {
     if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {

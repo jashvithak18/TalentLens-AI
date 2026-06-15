@@ -146,7 +146,7 @@ exports.uploadResume = async (req, res, next) => {
     }
 
     // 2. Upload to Cloudinary (or fallback to local relative route)
-    const uploadResult = await uploadToCloudinary(req.file.path, 'resumes');
+    const uploadResult = await uploadToCloudinary(req.file.path, 'resumes', req.file.mimetype);
 
     // Call AI Parser
     const parsedData = await aiParseResume(resumeText);
@@ -317,7 +317,7 @@ exports.addCertification = async (req, res, next) => {
     const profile = await CandidateProfile.findOne({ user: req.user.id });
     let certData = { ...req.body };
     if (req.file) {
-      const uploadResult = await uploadToCloudinary(req.file.path, 'certifications');
+      const uploadResult = await uploadToCloudinary(req.file.path, 'certifications', req.file.mimetype);
       certData.pdfUrl = uploadResult.url;
       certData.pdfPublicId = uploadResult.public_id;
     }
@@ -336,7 +336,7 @@ exports.uploadAvatar = async (req, res, next) => {
   }
 
   try {
-    const uploadResult = await uploadToCloudinary(req.file.path, 'avatars');
+    const uploadResult = await uploadToCloudinary(req.file.path, 'avatars', req.file.mimetype);
     let profile = await CandidateProfile.findOne({ user: req.user.id });
     if (!profile) {
       profile = new CandidateProfile({ user: req.user.id });
@@ -516,7 +516,7 @@ exports.updateSubSection = async (req, res, next) => {
 
     let updateData = { ...req.body };
     if (type === 'certifications' && req.file) {
-      const uploadResult = await uploadToCloudinary(req.file.path, 'certifications');
+      const uploadResult = await uploadToCloudinary(req.file.path, 'certifications', req.file.mimetype);
       updateData.pdfUrl = uploadResult.url;
       updateData.pdfPublicId = uploadResult.public_id;
     }

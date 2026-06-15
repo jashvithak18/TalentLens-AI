@@ -17,7 +17,7 @@ import {
 
 const getResumeUrl = (url) => {
   if (!url) return '';
-  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
   let apiBase = import.meta.env.VITE_API_URL;
   if (!apiBase) {
     if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
@@ -178,6 +178,22 @@ const CandidateProfile = () => {
     }
   });
 
+  const uploadResumeMutation = useMutation({
+    mutationFn: async (formData) => {
+      const res = await api.post('/candidates/resume', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['candidateProfile'] });
+      showSuccess('Resume updated successfully! AI profile sync completed in the background.');
+    },
+    onError: (err) => {
+      setErrorMsg(err.response?.data?.error || 'Failed to upload resume.');
+    }
+  });
+
   const addCertificationMutation = useMutation({
     mutationFn: async (formData) => {
       const res = await api.post('/candidates/certifications', formData, {
@@ -277,6 +293,15 @@ const CandidateProfile = () => {
       const fd = new FormData();
       fd.append('avatar', file);
       uploadAvatarMutation.mutate(fd);
+    }
+  };
+
+  const handleResumeUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const fd = new FormData();
+      fd.append('resume', file);
+      uploadResumeMutation.mutate(fd);
     }
   };
 
@@ -458,6 +483,46 @@ const CandidateProfile = () => {
                 {uploadAvatarMutation.isPending && (
                   <span className="text-[10px] text-indigo-600 font-semibold animate-pulse block mt-1">Uploading new avatar...</span>
                 )}
+              </div>
+            </div>
+
+            {/* Resume Uploader / Viewer */}
+            <div className="flex items-center justify-between pb-5 border-b border-darkBorder mb-5">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+                  <FileText size={24} />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-800">My Resume Document</h4>
+                  {profile.resumeUrl ? (
+                    <div className="flex items-center space-x-2 mt-1">
+                      <a
+                        href={getResumeUrl(profile.resumeUrl)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[11px] font-bold text-indigo-600 hover:text-indigo-850 underline truncate max-w-[200px]"
+                      >
+                        {profile.resumePublicId || 'View Resume'}
+                      </a>
+                      <span className="text-[10px] text-emerald-600 font-bold px-1.5 py-0.5 bg-emerald-50 border border-emerald-100 rounded">Parsed</span>
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-textMuted mt-1">No resume document uploaded yet.</p>
+                  )}
+                </div>
+              </div>
+              <div>
+                <label className="btn-secondary px-3 py-1.5 text-[11px] cursor-pointer flex items-center space-x-1.5 font-bold">
+                  <Upload size={12} />
+                  <span>{uploadResumeMutation.isPending ? 'Syncing...' : profile.resumeUrl ? 'Update Resume' : 'Upload Resume'}</span>
+                  <input
+                    type="file"
+                    accept=".pdf,.docx,.doc,.txt"
+                    onChange={handleResumeUpload}
+                    className="hidden"
+                    disabled={uploadResumeMutation.isPending}
+                  />
+                </label>
               </div>
             </div>
 
