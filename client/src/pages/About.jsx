@@ -1268,7 +1268,7 @@ export const About = () => {
   const statsRef = useRef(null);
 
   return (
-    <div className="mesh-gradient min-h-screen selection:bg-brandPrimary/10 overflow-x-hidden">
+    <div className="mesh-gradient min-h-screen selection:bg-brandPrimary/10 overflow-x-clip">
 
       {/* ──────────────── HERO SECTION ──────────────── */}
       <section className="relative pt-20 pb-24 px-6 max-w-7xl mx-auto overflow-hidden">
