@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
 // Layout components
@@ -37,6 +37,8 @@ import UserManagement from './pages/admin/UserManagement';
 
 const App = () => {
   const { token, user } = useSelector((state) => state.auth);
+  const location = useLocation();
+  const isAboutPage = location.pathname === '/';
 
   // Protected route wrapper
   const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -50,14 +52,13 @@ const App = () => {
   };
 
   return (
-    <Router>
-      <div className="min-h-screen bg-darkBg text-slate-900 flex flex-col">
-        {!token && <PublicHeader />}
-        <div className="flex-1 flex">
-          <div className={`flex-1 flex flex-col min-w-0 ${token ? 'pt-16 pb-16 md:pb-0' : ''}`}>
-            {token && <Navbar />}
-            <main className={`flex-1 ${token ? 'p-6 overflow-y-auto' : ''}`}>
-            <Routes>
+    <div className="min-h-screen bg-darkBg text-slate-900 flex flex-col">
+      {!token && <PublicHeader />}
+      <div className="flex-1 flex">
+        <div className={`flex-1 flex flex-col min-w-0 ${token && !isAboutPage ? 'pt-16 pb-16 md:pb-0' : ''}`}>
+          {token && <Navbar />}
+          <main className={`flex-1 ${token && !isAboutPage ? 'p-6 overflow-y-auto' : ''}`}>
+          <Routes>
               {/* About Page as permanent Home Page */}
               <Route path="/" element={<About />} />
 
@@ -209,7 +210,6 @@ const App = () => {
         </div>
       </div>
     </div>
-  </Router>
   );
 };
 
