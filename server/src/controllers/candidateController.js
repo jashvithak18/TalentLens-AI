@@ -98,10 +98,7 @@ exports.uploadResume = async (req, res, next) => {
   }
 
   try {
-    // 1. Upload to Cloudinary (or fallback to local relative route)
-    const uploadResult = await uploadToCloudinary(req.file.path, 'resumes');
-
-    // 2. Perform AI Parsing (Read the local file text or simulated parsing)
+    // 1. Perform AI Parsing (Read the local file text) BEFORE uploading to Cloudinary (which deletes the local file from disk)
     let resumeText = `Name: ${req.user.name}\nEmail: ${req.user.email}\n`;
     try {
       if (req.file.mimetype === 'application/pdf' || req.file.path.endsWith('.pdf')) {
@@ -115,6 +112,9 @@ exports.uploadResume = async (req, res, next) => {
       console.error('Error reading/parsing resume file:', readErr);
       resumeText += "Simulated text readout from resume file.";
     }
+
+    // 2. Upload to Cloudinary (or fallback to local relative route)
+    const uploadResult = await uploadToCloudinary(req.file.path, 'resumes');
 
     // Call AI Parser
     const parsedData = await aiParseResume(resumeText);
