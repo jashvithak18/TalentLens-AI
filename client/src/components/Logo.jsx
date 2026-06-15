@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 export const LogoIcon = ({ className = "h-8 w-8", ...props }) => {
   return (
@@ -77,14 +78,14 @@ export const LogoIcon = ({ className = "h-8 w-8", ...props }) => {
 
 export const Logo = ({ className = "", iconSize = "h-8 w-8", textSize = "text-xl", showText = true }) => {
   return (
-    <div className={`flex items-center gap-2.5 ${className}`}>
+    <Link to="/" className={`flex items-center gap-2.5 ${className}`}>
       <LogoIcon className={iconSize} />
       {showText && (
         <span className={`font-jakarta font-extrabold tracking-tight text-slate-900 ${textSize}`}>
           TalentLens<span className="text-brandPrimary font-medium">.AI</span>
         </span>
       )}
-    </div>
+    </Link>
   );
 };
 
