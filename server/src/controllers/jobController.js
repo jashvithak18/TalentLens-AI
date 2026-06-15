@@ -42,8 +42,14 @@ exports.getJobs = async (req, res, next) => {
   }
 
   try {
-    const jobs = await Job.find(filter).populate('recruiter', 'name');
-    res.status(200).json({ success: true, count: jobs.length, jobs });
+    const jobs = await Job.find(filter).populate('recruiter', 'name').lean();
+    const jobsWithCounts = await Promise.all(
+      jobs.map(async (job) => {
+        const applicantCount = await Application.countDocuments({ job: job._id });
+        return { ...job, applicantCount };
+      })
+    );
+    res.status(200).json({ success: true, count: jobsWithCounts.length, jobs: jobsWithCounts });
   } catch (error) {
     next(error);
   }
@@ -233,7 +239,10 @@ exports.getJobRankings = async (req, res, next) => {
       .populate('candidate', 'name email')
       .populate({
         path: 'candidate',
-        populate: { path: 'profile' }
+        populate: [
+          { path: 'profile' },
+          { path: 'score' }
+        ]
       });
 
     // If custom weights are supplied (JD Simulator action), calculate updated scores in real-time

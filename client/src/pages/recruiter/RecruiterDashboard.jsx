@@ -1,15 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
 import api from '../../utils/api';
-import LoadingScreen from '../../components/LoadingScreen';
 import {
   Users,
   Briefcase,
   Layers,
   Heart,
   TrendingUp,
-  Award
+  AlertCircle,
+  CheckCircle
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -25,18 +25,44 @@ import {
 
 const RecruiterDashboard = () => {
   const { user } = useSelector((state) => state.auth);
+  const [success, setSuccess] = useState('');
+  const [error, setError] = useState('');
 
   // Fetch recruiter analytics
   const { data, isLoading } = useQuery({
     queryKey: ['recruiterAnalytics'],
     queryFn: async () => {
-      const res = await api.get('/analytics/recruiter');
-      return res.data;
+      try {
+        const res = await api.get('/analytics/recruiter');
+        return res.data;
+      } catch (err) {
+        setError(err.response?.data?.error || 'Failed to fetch dashboard data.');
+        setTimeout(() => setError(''), 3000);
+        throw err;
+      }
     }
   });
 
   if (isLoading) {
-    return <LoadingScreen text="Assembling KPI analytics engines..." fullScreen={false} />;
+    return (
+      <div className="space-y-6 pt-16 px-4 max-w-7xl mx-auto animate-pulse">
+        {/* Header Banner Skeleton */}
+        <div className="h-24 bg-slate-200 rounded-2xl w-full" />
+        
+        {/* KPI Skeleton Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="h-20 bg-slate-200 rounded-xl" />
+          ))}
+        </div>
+        
+        {/* Charts Skeleton Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 h-80 bg-slate-200 rounded-2xl" />
+          <div className="lg:col-span-1 h-80 bg-slate-200 rounded-2xl" />
+        </div>
+      </div>
+    );
   }
 
   const kpis = data?.kpis || { totalJobs: 0, totalCandidates: 0, totalApplications: 0, interviews: 0, hires: 0 };
@@ -57,11 +83,24 @@ const RecruiterDashboard = () => {
   const COLORS = ['#4F46E5', '#3B82F6', '#10B981', '#F59E0B', '#EC4899', '#8B5CF6', '#14B8A6'];
 
   return (
-    <div className="space-y-6 pt-16">
-      
-      {/* Personalized Welcome Banner */}
+    <div className="space-y-6 pt-16 px-4 max-w-7xl mx-auto pb-8">
+      {/* Toast Messages */}
+      {success && (
+        <div className="fixed top-20 right-6 z-50 bg-emerald-50 border border-emerald-200 text-emerald-600 text-xs rounded-xl p-4 shadow-lg flex items-center space-x-2 animate-in fade-in slide-in-from-top-4 duration-250">
+          <CheckCircle size={16} />
+          <span className="font-bold">{success}</span>
+        </div>
+      )}
+      {error && (
+        <div className="fixed top-20 right-6 z-50 bg-rose-50 border border-rose-200 text-rose-600 text-xs rounded-xl p-4 shadow-lg flex items-center space-x-2 animate-in fade-in slide-in-from-top-4 duration-250">
+          <AlertCircle size={16} />
+          <span className="font-bold">{error}</span>
+        </div>
+      )}
+
+      {/* Welcome Banner */}
       <div className="bg-gradient-to-r from-brandPrimary/5 via-brandSecondary/5 to-transparent border border-brandPrimary/10 rounded-2xl p-6">
-        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 font-jakarta">
+        <h1 className="text-xl font-extrabold tracking-tight text-slate-900 font-jakarta">
           Welcome back, {user?.name || 'Recruiter'}
         </h1>
         <p className="text-xs text-slate-500 mt-1 font-semibold">
@@ -72,11 +111,11 @@ const RecruiterDashboard = () => {
       {/* KPI counters */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {[
-          { label: 'Active Jobs', val: kpis.totalJobs, icon: Briefcase, bg: 'bg-indigo-50 border-indigo-100 text-brandPrimary' },
-          { label: 'Total Applicants', val: kpis.totalApplications, icon: Users, bg: 'bg-blue-50 border-blue-100 text-brandSecondary' },
-          { label: 'Platform Pool', val: kpis.totalCandidates, icon: Layers, bg: 'bg-emerald-50 border-emerald-100 text-brandAccent' },
-          { label: 'Interviews', val: kpis.interviews, icon: Heart, bg: 'bg-rose-50 border-rose-100 text-rose-600' },
-          { label: 'Successful Hires', val: kpis.hires, icon: TrendingUp, bg: 'bg-purple-50 border-purple-100 text-purple-600' }
+          { label: 'Active Jobs', val: kpis.totalJobs, icon: Briefcase, bg: 'bg-indigo-50 border-indigo-150 text-brandPrimary' },
+          { label: 'Total Applicants', val: kpis.totalApplications, icon: Users, bg: 'bg-blue-50 border-blue-150 text-brandSecondary' },
+          { label: 'Platform Pool', val: kpis.totalCandidates, icon: Layers, bg: 'bg-emerald-50 border-emerald-150 text-brandAccent' },
+          { label: 'Interviews', val: kpis.interviews, icon: Heart, bg: 'bg-rose-50 border-rose-150 text-rose-600' },
+          { label: 'Successful Hires', val: kpis.hires, icon: TrendingUp, bg: 'bg-purple-50 border-purple-150 text-purple-600' }
         ].map((kpi, idx) => {
           const Icon = kpi.icon;
           return (
@@ -95,7 +134,6 @@ const RecruiterDashboard = () => {
 
       {/* Analytics Visualizers */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
         {/* Recruitment Funnel */}
         <div className="lg:col-span-2 bg-white border border-[#E5E7EB] rounded-2xl p-5 space-y-4 shadow-sm">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 font-jakarta">Pipeline Funnel Progress</h3>

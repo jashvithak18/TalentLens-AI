@@ -56,7 +56,7 @@ const Register = () => {
     setLoading(true);
 
     try {
-      const res = await authAPI.googleLogin({ credential: response.credential });
+      const res = await authAPI.googleLogin({ credential: response.credential, role });
       if (res.data.success) {
         localStorage.setItem('refreshToken', res.data.refreshToken);
         dispatch(setCredentials({

@@ -29,13 +29,12 @@ const seedData = async (shouldCloseConnection = false) => {
     console.log('Cleared existing data for seeding.');
 
     // 1. Create Users
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash('password123', salt);
+    const defaultPassword = 'password123';
 
     const admin = await User.create({
       name: 'Global Admin',
       email: 'admin@talentlens.ai',
-      password: hashedPassword,
+      password: defaultPassword,
       role: 'admin',
       isVerified: true
     });
@@ -43,7 +42,7 @@ const seedData = async (shouldCloseConnection = false) => {
     const recruiter = await User.create({
       name: 'Sarah Connor',
       email: 'sarah@skynet.com',
-      password: hashedPassword,
+      password: defaultPassword,
       role: 'recruiter',
       isVerified: true
     });
@@ -383,7 +382,7 @@ const seedData = async (shouldCloseConnection = false) => {
       const u = await User.create({
         name: cData.name,
         email: cData.email,
-        password: hashedPassword,
+        password: defaultPassword,
         role: 'candidate',
         isVerified: true
       });

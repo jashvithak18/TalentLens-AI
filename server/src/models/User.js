@@ -39,6 +39,34 @@ const UserSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// Virtual for candidate profile
+UserSchema.virtual('profile', {
+  ref: 'CandidateProfile',
+  localField: '_id',
+  foreignField: 'user',
+  justOne: true
+});
+
+// Virtual for recruiter profile
+UserSchema.virtual('recruiterProfile', {
+  ref: 'RecruiterProfile',
+  localField: '_id',
+  foreignField: 'user',
+  justOne: true
+});
+
+// Virtual for candidate scores (DNA/behavioral)
+UserSchema.virtual('score', {
+  ref: 'CandidateScore',
+  localField: '_id',
+  foreignField: 'candidate',
+  justOne: true
+});
+
+// Set toJSON and toObject to include virtuals
+UserSchema.set('toJSON', { virtuals: true });
+UserSchema.set('toObject', { virtuals: true });
+
 // Hash password before saving
 UserSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {

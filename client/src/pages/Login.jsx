@@ -12,6 +12,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showGooglePicker, setShowGooglePicker] = useState(false);
+  const [role, setRole] = useState('candidate');
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -50,7 +51,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const res = await authAPI.googleLogin({ credential: response.credential });
+      const res = await authAPI.googleLogin({ credential: response.credential, role });
       if (res.data.success) {
         localStorage.setItem('refreshToken', res.data.refreshToken);
         dispatch(setCredentials({
@@ -201,6 +202,32 @@ const Login = () => {
           <span className="relative bg-white px-4 text-xs font-bold text-slate-400 uppercase tracking-wider">
             or continue with
           </span>
+        </div>
+
+        {/* Role Selector for Google Sign-In */}
+        <div className="grid grid-cols-2 gap-2 p-1 bg-slate-50 border border-[#E5E7EB] rounded-lg mb-4">
+          <button
+            type="button"
+            onClick={() => setRole('candidate')}
+            className={`py-1.5 text-xs font-bold rounded-md transition-all ${
+              role === 'candidate'
+                ? 'bg-brandPrimary text-white shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            I am a Candidate
+          </button>
+          <button
+            type="button"
+            onClick={() => setRole('recruiter')}
+            className={`py-1.5 text-xs font-bold rounded-md transition-all ${
+              role === 'recruiter'
+                ? 'bg-brandPrimary text-white shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            I am a Recruiter
+          </button>
         </div>
 
         {/* Real Google Sign-In Button */}

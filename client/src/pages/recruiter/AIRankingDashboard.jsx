@@ -1,26 +1,27 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSelector } from 'react-redux';
+import { useQuery } from '@tanstack/react-query';
 import api from '../../utils/api';
 import {
   Sliders,
   EyeOff,
   User,
-  Award,
   Zap,
-  TrendingUp,
-  AlertTriangle,
-  Info,
+  CheckCircle,
+  AlertCircle,
   ChevronDown,
-  Sword,
-  X
+  ChevronUp,
+  Award,
+  TrendingUp,
+  X,
+  Plus
 } from 'lucide-react';
 
 const AIRankingDashboard = () => {
   const { id } = useParams();
-  const queryClient = useQueryClient();
-  const { isBlindMode } = useSelector(state => state.auth);
+  
+  const [successMsg, setSuccessMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
   // JD Simulator Weights
   const [weights, setWeights] = useState({
@@ -31,377 +32,344 @@ const AIRankingDashboard = () => {
     behavioralFit: 10
   });
 
-  // Comparison battle selections
-  const [compareList, setCompareList] = useState([]);
-  const [showBattleModal, setShowBattleModal] = useState(false);
-  const [comparisonResult, setComparisonResult] = useState(null);
-  const [battleLoading, setBattleLoading] = useState(false);
-
-  // Detailed explanation card toggle
+  const [blindMode, setBlindMode] = useState(false);
   const [expandedCand, setExpandedCand] = useState(null);
-
-  const [explainingId, setExplainingId] = useState(null);
-  const [inlineExplanations, setInlineExplanations] = useState({});
-
-  const handleExplainRanking = async (rank) => {
-    const candidateName = rank.candidate?.name || 'the candidate';
-    setExplainingId(rank._id);
-
-    try {
-      const res = await api.post('/ai/copilot', {
-        messages: [
-          {
-            sender: 'user',
-            content: `Explain in detail why candidate ${candidateName} is ranked at match score ${rank.matchScore}% for the job post ${job.title}. Include their primary strengths and any missing requirements or risks.`
-          }
-        ]
-      });
-
-      if (res.data?.success) {
-        setInlineExplanations(prev => ({
-          ...prev,
-          [rank._id]: res.data.reply
-        }));
-      }
-    } catch (err) {
-      setInlineExplanations(prev => ({
-        ...prev,
-        [rank._id]: `AI Copilot is calibrating fit metrics. ${candidateName} matches this job with a score of ${rank.matchScore}% due to solid skill alignment and code assessment compliance.`
-      }));
-    } finally {
-      setExplainingId(null);
-    }
-  };
-
-  const exportShortlist = (format) => {
-    if (rankings.length === 0) {
-      alert('No candidates available to export.');
-      return;
-    }
-
-    const jobTitle = job.title || 'Job';
-    const dateStr = new Date().toISOString().slice(0, 10);
-    const fileName = `TalentLens_Shortlist_${jobTitle.replace(/\s+/g, '_')}_${dateStr}`;
-
-    if (format === 'json') {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(rankings, null, 2));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `${fileName}.json`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-    } else {
-      // Format as clean text report
-      let textContent = `TALENTLENS AI — RANKED SHORTLIST REPORT\n`;
-      textContent += `========================================\n`;
-      textContent += `JOB TITLE: ${jobTitle}\n`;
-      textContent += `DATE: ${new Date().toLocaleDateString()}\n`;
-      textContent += `TOTAL APPLICANTS QUANTIFIED: ${rankings.length}\n\n`;
-      
-      rankings.forEach((rank, index) => {
-        textContent += `${index + 1}. NAME: ${rank.candidate?.name || 'Anonymized Candidate'}\n`;
-        textContent += `   MATCH FIT SCORE: ${rank.matchScore}%\n`;
-        textContent += `   ROLE TITLE: ${rank.candidate?.profile?.title || 'N/A'}\n`;
-        textContent += `   LOCATION: ${rank.candidate?.profile?.location || 'N/A'}\n`;
-        if (rank.reasons?.length > 0) {
-          textContent += `   STRENGTHS:\n`;
-          rank.reasons.forEach(r => {
-            textContent += `     - ${r}\n`;
-          });
-        }
-        if (rank.missing?.length > 0) {
-          textContent += `   MISSING / GAPS:\n`;
-          rank.missing.forEach(m => {
-            textContent += `     - ${m}\n`;
-          });
-        }
-        textContent += `----------------------------------------\n\n`;
-      });
-
-      const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", url);
-      downloadAnchor.setAttribute("download", `${fileName}.txt`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-      URL.revokeObjectURL(url);
-    }
-  };
+  const [selectedForCompare, setSelectedForCompare] = useState([]);
+  const [showCompareModal, setShowCompareModal] = useState(false);
 
   // Fetch rankings with simulator weights
   const { data: rankData, isLoading: rankLoading } = useQuery({
     queryKey: ['jobRankings', id, weights],
     queryFn: async () => {
-      const res = await api.get(`/jobs/${id}/rankings`, {
-        params: { weights: JSON.stringify(weights) }
-      });
-      return res.data;
+      try {
+        const res = await api.get(`/jobs/${id}/rankings`, {
+          params: { weights: JSON.stringify(weights) }
+        });
+        return res.data;
+      } catch (err) {
+        setErrorMsg(err.response?.data?.error || 'Failed to fetch candidate rankings.');
+        setTimeout(() => setErrorMsg(''), 3000);
+        throw err;
+      }
     }
   });
 
   // Fetch job details
-  const { data: jobData } = useQuery({
+  const { data: jobData, isLoading: jobLoading } = useQuery({
     queryKey: ['jobDetails', id],
     queryFn: async () => {
-      const res = await api.get(`/jobs/${id}`);
-      return res.data;
+      try {
+        const res = await api.get(`/jobs/${id}`);
+        return res.data;
+      } catch (err) {
+        setErrorMsg(err.response?.data?.error || 'Failed to fetch job details.');
+        setTimeout(() => setErrorMsg(''), 3000);
+        throw err;
+      }
     }
   });
+
+  const handleSliderChange = (key, val) => {
+    setWeights(prev => ({ ...prev, [key]: Number(val) }));
+  };
+
+  const handleCheckboxChange = (candidateId) => {
+    setSelectedForCompare(prev => {
+      if (prev.includes(candidateId)) {
+        return prev.filter(cId => cId !== candidateId);
+      }
+      if (prev.length >= 2) {
+        return prev; // Lock at max 2
+      }
+      return [...prev, candidateId];
+    });
+  };
+
+  const getAnonymizedName = (index) => {
+    return `Candidate ${String.fromCharCode(65 + index)}`;
+  };
+
+  const getRiskColor = (score) => {
+    if (score > 70) return 'bg-rose-50 text-rose-600 border-rose-200';
+    if (score > 35) return 'bg-amber-50 text-amber-600 border-amber-200';
+    return 'bg-emerald-50 text-emerald-600 border-emerald-200';
+  };
+
+  const getMatchScoreColor = (score) => {
+    if (score >= 80) return 'text-emerald-600';
+    if (score >= 60) return 'text-brandPrimary';
+    return 'text-slate-500';
+  };
+
+  if (rankLoading || jobLoading) {
+    return (
+      <div className="space-y-6 pt-16 px-4 max-w-7xl mx-auto animate-pulse">
+        <div className="h-10 bg-slate-200 rounded-lg w-1/3" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-1 h-96 bg-slate-200 rounded-2xl" />
+          <div className="lg:col-span-2 space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-44 bg-slate-200 rounded-2xl w-full" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const rankings = rankData?.rankings || [];
   const job = jobData?.job || {};
 
-  const handleSliderChange = (key, val) => {
-    setWeights({ ...weights, [key]: Number(val) });
-  };
-
-  const handleToggleCompare = (cand) => {
-    if (compareList.some(c => c._id === cand._id)) {
-      setCompareList(compareList.filter(c => c._id !== cand._id));
-    } else {
-      if (compareList.length >= 2) {
-        alert('You can only compare a maximum of 2 candidates at a time.');
-        return;
-      }
-      setCompareList([...compareList, cand]);
-    }
-  };
-
-  const runComparisonBattle = async () => {
-    if (compareList.length !== 2) return;
-    setBattleLoading(true);
-    setShowBattleModal(true);
-    setComparisonResult(null);
-
-    try {
-      // Simulate/Trigger AI Battle evaluation
-      const res = await api.get(`/ai/match/${id}/${compareList[0]._id}`);
-      const res2 = await api.get(`/ai/match/${id}/${compareList[1]._id}`);
-
-      // Declare winner based on score comparison
-      const cand1Score = compareList[0].matchScore;
-      const cand2Score = compareList[1].matchScore;
-      const winner = cand1Score >= cand2Score ? compareList[0] : compareList[1];
-      const loser = cand1Score < cand2Score ? compareList[0] : compareList[1];
-
-      setComparisonResult({
-        winner: winner,
-        loser: loser,
-        reasoning: `Winner was declared due to superior technical fit score (${winner.fitDetails?.technicalFit}%) and higher assessment alignment. ${winner.reasons?.[0] || ''}`
-      });
-    } catch (err) {
-      // Graceful fallback
-      setComparisonResult({
-        winner: compareList[0],
-        loser: compareList[1],
-        reasoning: 'AI battle runner is calibrating details. Check back shortly.'
-      });
-    } finally {
-      setBattleLoading(false);
-    }
-  };
+  // Resolve compared candidates
+  const comp1 = rankings.find(r => r.candidate?._id === selectedForCompare[0]);
+  const comp2 = rankings.find(r => r.candidate?._id === selectedForCompare[1]);
+  
+  // Decide winner for comparison
+  let winner = null;
+  let loser = null;
+  if (comp1 && comp2) {
+    winner = comp1.matchScore >= comp2.matchScore ? comp1 : comp2;
+    loser = comp1.matchScore < comp2.matchScore ? comp1 : comp2;
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center pt-16">
-        <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 font-jakarta">
-            AI Calibration Dashboard: {job.title}
-          </h1>
-          <p className="text-xs text-textMuted mt-1">Review explainable fits, risks, and simulated JD calibrations</p>
+    <div className="space-y-6 pt-16 px-4 max-w-7xl mx-auto pb-16 relative">
+      {/* Toast notifications */}
+      {successMsg && (
+        <div className="fixed top-20 right-6 z-50 bg-emerald-50 border border-emerald-200 text-emerald-600 text-xs rounded-xl p-4 shadow-lg flex items-center space-x-2 animate-in fade-in slide-in-from-top-4 duration-250">
+          <CheckCircle size={16} />
+          <span className="font-bold">{successMsg}</span>
         </div>
+      )}
+      {errorMsg && (
+        <div className="fixed top-20 right-6 z-50 bg-rose-50 border border-rose-200 text-rose-600 text-xs rounded-xl p-4 shadow-lg flex items-center space-x-2 animate-in fade-in slide-in-from-top-4 duration-250">
+          <AlertCircle size={16} />
+          <span className="font-bold">{errorMsg}</span>
+        </div>
+      )}
 
-        {compareList.length === 2 && (
-          <button
-            onClick={runComparisonBattle}
-            className="btn-accent text-xs font-bold flex items-center space-x-1.5 animate-bounce"
-          >
-            <Sword size={14} />
-            <span>Launch Talent Battle ({compareList.length})</span>
-          </button>
-        )}
+      {/* Header */}
+      <div>
+        <h1 className="text-xl font-extrabold tracking-tight text-slate-900 font-jakarta">
+          AI Calibration: {job.title}
+        </h1>
+        <p className="text-xs text-textMuted mt-1 font-semibold">
+          Adjust requirements weights in the JD Simulator to dynamically re-rank and evaluate candidates.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Sliders JD Simulator Column */}
-        <div className="lg:col-span-1 glass-panel border border-darkBorder rounded-xl p-5 space-y-4 h-fit">
-          <div className="flex items-center space-x-1.5 text-indigo-400">
-            <Sliders size={16} />
+        {/* Left Sidebar: JD Simulator */}
+        <div className="lg:col-span-1 bg-white border border-[#E5E7EB] rounded-2xl p-5 space-y-5 h-fit shadow-sm">
+          <div className="flex items-center space-x-2 text-brandPrimary">
+            <Sliders size={18} />
             <h3 className="text-xs font-bold uppercase tracking-wider">Dynamic JD Simulator</h3>
           </div>
-          <p className="text-[10px] text-textMuted">Calibrate requirements weights. Rankings will recompute instantly.</p>
+          <p className="text-[10px] text-textMuted font-semibold leading-relaxed">
+            Drag the sliders to change weighting. Candidates will be re-scored and sorted automatically.
+          </p>
 
-          <div className="space-y-4 pt-2">
+          <div className="space-y-4">
             {[
               { key: 'technicalFit', label: 'Technical Fit' },
               { key: 'experienceFit', label: 'Experience Match' },
               { key: 'projectFit', label: 'Project Portfolio' },
               { key: 'growthFit', label: 'Growth Potential' },
               { key: 'behavioralFit', label: 'Behavioral Signals' }
-            ].map((s) => (
-              <div key={s.key} className="space-y-1">
-                <div className="flex justify-between text-[11px] font-medium text-slate-700">
-                  <span>{s.label}</span>
-                  <span className="font-semibold text-indigo-400">{weights[s.key]}%</span>
+            ].map(slider => (
+              <div key={slider.key} className="space-y-1">
+                <div className="flex justify-between text-[11px] font-bold text-slate-700">
+                  <span>{slider.label}</span>
+                  <span className="text-brandPrimary">{weights[slider.key]}%</span>
                 </div>
                 <input
                   type="range"
                   min="0"
                   max="100"
-                  value={weights[s.key]}
-                  onChange={(e) => handleSliderChange(s.key, e.target.value)}
-                  className="w-full accent-indigo-600 bg-slate-950 h-1 rounded-lg"
+                  value={weights[slider.key]}
+                  onChange={(e) => handleSliderChange(slider.key, e.target.value)}
+                  className="w-full h-1 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-brandPrimary"
                 />
               </div>
             ))}
           </div>
+
+          <div className="border-t border-[#E5E7EB] pt-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <EyeOff size={16} className="text-slate-400" />
+                <span className="text-xs font-bold text-slate-700">Blind Hiring Mode</span>
+              </div>
+              <div
+                onClick={() => setBlindMode(!blindMode)}
+                className={`w-10 h-5 rounded-full p-0.5 transition-colors cursor-pointer flex items-center ${
+                  blindMode ? 'bg-brandPrimary justify-end' : 'bg-slate-200 justify-start'
+                }`}
+              >
+                <div className="w-4 h-4 bg-white rounded-full shadow-sm" />
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Applicants List Column */}
+        {/* Main Content: Candidate Cards Grid */}
         <div className="lg:col-span-2 space-y-4">
-          {!rankLoading && rankings.length > 0 && (
-            <div className="glass-panel border border-darkBorder rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-              <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">Quantified Candidates</h3>
-                <p className="text-[10px] text-textMuted mt-0.5">Dynamically sorted shortlist</p>
-              </div>
-              <div className="flex items-center space-x-2 w-full sm:w-auto">
-                <button
-                  onClick={() => exportShortlist('txt')}
-                  className="flex-1 sm:flex-initial bg-slate-900 border border-darkBorder text-slate-300 hover:text-white px-3 py-1.5 text-[10px] font-bold rounded-lg transition-colors cursor-pointer"
-                >
-                  Export Shortlist (.TXT)
-                </button>
-                <button
-                  onClick={() => exportShortlist('json')}
-                  className="flex-1 sm:flex-initial btn-primary px-3 py-1.5 text-[10px] font-bold rounded-lg cursor-pointer"
-                >
-                  Export Shortlist (.JSON)
-                </button>
-              </div>
-            </div>
-          )}
-
-          {rankLoading ? (
-            <div className="space-y-4 animate-pulse">
-              <div className="h-24 bg-slate-800 rounded-xl" />
-              <div className="h-24 bg-slate-800 rounded-xl" />
-            </div>
-          ) : rankings.length === 0 ? (
-            <div className="glass-panel border border-darkBorder rounded-xl p-8 text-center text-slate-500 text-xs">
-              No applicant evaluations discovered for this posting.
+          {rankings.length === 0 ? (
+            <div className="bg-white border border-[#E5E7EB] rounded-2xl p-8 text-center text-slate-400 text-xs font-bold shadow-sm">
+              No evaluations available for this job posting yet.
             </div>
           ) : (
-            rankings.map((rank) => {
-              const profile = rank.candidate?.profile || {};
-              const isSelected = compareList.some(c => c._id === rank._id);
+            rankings.map((rank, index) => {
+              const candName = blindMode ? getAnonymizedName(index) : rank.candidate?.name || 'Candidate';
+              const candLocation = blindMode ? 'Anonymized Location' : rank.candidate?.profile?.location || 'Remote';
+              const isSelected = selectedForCompare.includes(rank.candidate?._id);
               const isExpanded = expandedCand === rank._id;
-
+              
               return (
                 <div
                   key={rank._id}
-                  className={`glass-panel border rounded-xl p-5 transition-all space-y-4 ${
-                    isSelected ? 'border-indigo-600/60' : 'border-darkBorder'
+                  className={`bg-white border rounded-2xl p-5 shadow-sm transition-all space-y-4 ${
+                    isSelected ? 'border-brandPrimary ring-2 ring-brandPrimary/10' : 'border-[#E5E7EB]'
                   }`}
                 >
                   <div className="flex justify-between items-start">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-slate-900 border border-slate-800 rounded-lg flex items-center justify-center font-bold text-indigo-400">
-                        <User size={18} />
+                    <div className="flex items-center space-x-3.5">
+                      <div className="w-8 h-8 rounded-full bg-slate-50 border border-[#E5E7EB] flex items-center justify-center font-extrabold text-slate-700 text-xs shadow-sm">
+                        {index + 1}
                       </div>
                       <div>
-                        {/* Blind Hiring Rendering Switch */}
-                        <h3 className="text-xs font-bold text-slate-800">
-                          {isBlindMode ? 'Anonymized Candidate' : rank.candidate?.name}
-                        </h3>
-                        <p className="text-[10px] text-textMuted mt-0.5">
-                          {profile.title || 'MERN Engineer'} • {isBlindMode ? 'Anonymized Location' : profile.location}
+                        <h3 className="text-sm font-bold text-slate-800">{candName}</h3>
+                        <p className="text-[10px] text-textMuted mt-0.5 font-bold">
+                          {rank.candidate?.profile?.title || 'Software Engineer'} • {candLocation}
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-4">
                       <div className="text-right">
-                        <span className="text-xs font-semibold text-textMuted">Match Fit</span>
-                        <p className="text-lg font-bold text-indigo-400">{rank.matchScore}%</p>
+                        <span className="text-[9px] uppercase tracking-wider font-bold text-slate-400 block">Match Score</span>
+                        <span className={`text-lg font-extrabold ${getMatchScoreColor(rank.matchScore)}`}>
+                          {rank.matchScore}%
+                        </span>
                       </div>
-                      <button
-                        onClick={() => handleToggleCompare(rank)}
-                        className={`px-3 py-1.5 text-[10px] font-bold rounded-lg border transition-all ${
-                          isSelected
-                            ? 'bg-indigo-950/20 text-indigo-400 border-indigo-500/20'
-                            : 'bg-slate-900 text-slate-400 border-darkBorder hover:text-white'
-                        }`}
-                      >
-                        Compare
-                      </button>
+
+                      {/* Compare Checkbox */}
+                      <div className="flex items-center space-x-1 bg-slate-50 border border-[#E5E7EB] px-2.5 py-1.5 rounded-lg">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleCheckboxChange(rank.candidate?._id)}
+                          className="w-3.5 h-3.5 rounded text-brandPrimary border-slate-300 focus:ring-brandPrimary cursor-pointer"
+                        />
+                        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Compare</span>
+                      </div>
                     </div>
                   </div>
 
                   {/* Skills tags */}
-                  <div className="flex flex-wrap gap-1.5">
-                    {profile.skills?.slice(0, 6).map((s, idx) => (
-                      <span key={idx} className="px-2 py-0.5 bg-slate-900 border border-slate-800 text-[9px] text-gray-300 rounded">
-                        {s}
+                  <div className="flex flex-wrap gap-1">
+                    {(rank.candidate?.profile?.skills || []).slice(0, 6).map((skill, idx) => (
+                      <span key={idx} className="px-2 py-0.5 bg-slate-50 border border-[#E5E7EB] text-[9px] text-slate-600 font-semibold rounded">
+                        {skill}
                       </span>
                     ))}
                   </div>
 
-                  {/* Explainable AI & Chat explanation actions */}
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-4">
-                      <button
-                        onClick={() => setExpandedCand(isExpanded ? null : rank._id)}
-                        className="flex items-center space-x-1 text-[10px] font-bold text-indigo-400 hover:text-indigo-300 transition-all cursor-pointer"
-                      >
-                        <ChevronDown size={12} className={`transform transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                        <span>{isExpanded ? 'Hide Fit Analysis' : 'Show AI Explainable Fit Details'}</span>
-                      </button>
-
-                      <button
-                        onClick={() => handleExplainRanking(rank)}
-                        disabled={explainingId === rank._id}
-                        className="flex items-center space-x-1 text-[10px] font-bold text-emerald-400 hover:text-emerald-300 disabled:text-slate-600 transition-all cursor-pointer"
-                      >
-                        <Zap size={12} className={explainingId === rank._id ? 'animate-pulse' : ''} />
-                        <span>{explainingId === rank._id ? 'AI is analyzing...' : 'Explain this ranking in plain English'}</span>
-                      </button>
+                  {/* Expandable trigger */}
+                  <div className="flex space-x-4 border-t border-[#E5E7EB]/50 pt-3">
+                    <div
+                      onClick={() => setExpandedCand(isExpanded ? null : rank._id)}
+                      className="flex items-center space-x-1 text-[10px] font-bold text-brandPrimary hover:underline cursor-pointer"
+                    >
+                      {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                      <span>{isExpanded ? 'Hide AI Analysis' : 'Show AI Analysis'}</span>
                     </div>
-
-                    {inlineExplanations[rank._id] && (
-                      <div className="bg-slate-950/40 border border-emerald-500/10 rounded-lg p-3 text-[11px] text-slate-300 leading-relaxed space-y-1 font-semibold">
-                        <div className="flex items-center space-x-1 text-emerald-400 font-bold">
-                          <Zap size={11} />
-                          <span className="text-[9px] uppercase tracking-wider">AI Copilot Inline Summary</span>
-                        </div>
-                        <p className="whitespace-pre-wrap">{inlineExplanations[rank._id]}</p>
-                      </div>
-                    )}
-
-                    {isExpanded && (
-                      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-darkBorder/40 pt-4 text-xs">
-                        {/* Positives */}
-                        <div className="bg-emerald-950/10 border border-emerald-500/10 rounded-lg p-3 space-y-2">
-                          <h4 className="text-[10px] font-bold uppercase text-emerald-400 tracking-wider">Strengths & Match reasons</h4>
-                          <ul className="space-y-1 text-slate-300 leading-relaxed text-[11px] list-disc pl-4">
-                            {rank.reasons?.map((r, idx) => <li key={idx}>{r}</li>)}
-                          </ul>
-                        </div>
-
-                        {/* Why Not Higher / Missing */}
-                        <div className="bg-rose-950/10 border border-rose-500/10 rounded-lg p-3 space-y-2">
-                          <h4 className="text-[10px] font-bold uppercase text-rose-400 tracking-wider">Why Not ranked higher / Missing</h4>
-                          <ul className="space-y-1 text-slate-300 leading-relaxed text-[11px] list-disc pl-4">
-                            {rank.missing?.map((m, idx) => <li key={idx}>{m}</li>)}
-                          </ul>
-                        </div>
-                      </div>
-                    )}
                   </div>
+
+                  {/* Expanded AI Analysis Section */}
+                  {isExpanded && (
+                    <div className="space-y-4 border-t border-[#E5E7EB]/50 pt-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                      {/* Strengths and Gaps panels */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-emerald-50/50 border border-emerald-100 rounded-xl p-3.5 space-y-2">
+                          <h4 className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 flex items-center space-x-1">
+                            <CheckCircle size={12} />
+                            <span>Strengths</span>
+                          </h4>
+                          <ul className="text-[11px] text-slate-600 font-semibold space-y-1.5 list-disc pl-4 leading-relaxed">
+                            {rank.reasons?.map((reason, idx) => (
+                              <li key={idx}>{reason}</li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        <div className="bg-rose-50/50 border border-rose-100 rounded-xl p-3.5 space-y-2">
+                          <h4 className="text-[10px] font-bold uppercase tracking-wider text-rose-600 flex items-center space-x-1">
+                            <AlertCircle size={12} />
+                            <span>Why not higher / Gaps</span>
+                          </h4>
+                          <ul className="text-[11px] text-slate-600 font-semibold space-y-1.5 list-disc pl-4 leading-relaxed">
+                            {rank.missing?.map((gap, idx) => (
+                              <li key={idx}>{gap}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+
+                      {/* Risk Grid */}
+                      <div className="space-y-2">
+                        <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Hiring Risk Profile</h4>
+                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                          {[
+                            { key: 'skillGap', label: 'Skill Gap' },
+                            { key: 'experience', label: 'Experience' },
+                            { key: 'communication', label: 'Communication' },
+                            { key: 'team', label: 'Team Fit' },
+                            { key: 'assessment', label: 'Assessment' }
+                          ].map(risk => {
+                            const riskObj = rank.risks?.[risk.key] || { score: 0, explanation: '' };
+                            return (
+                              <div
+                                key={risk.key}
+                                className={`border rounded-xl p-2.5 flex flex-col items-center text-center space-y-1 ${getRiskColor(riskObj.score)}`}
+                                title={riskObj.explanation}
+                              >
+                                <span className="text-[9px] uppercase font-bold tracking-wider opacity-90">{risk.label}</span>
+                                <span className="text-sm font-extrabold">{riskObj.score}%</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Fit Details breakdown */}
+                      <div className="space-y-2.5">
+                        <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Weight breakdown</h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+                          {[
+                            { key: 'technicalFit', label: 'Technical Fit' },
+                            { key: 'experienceFit', label: 'Experience Fit' },
+                            { key: 'projectFit', label: 'Project Fit' },
+                            { key: 'growthFit', label: 'Growth Fit' },
+                            { key: 'behavioralFit', label: 'Behavioral Fit' }
+                          ].map(fit => {
+                            const val = rank.fitDetails?.[fit.key] || 0;
+                            return (
+                              <div key={fit.key} className="flex items-center justify-between text-[11px] font-semibold">
+                                <span className="text-slate-600 text-xs">{fit.label}</span>
+                                <div className="flex items-center space-x-2.5 w-1/2 justify-end">
+                                  <div className="w-24 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                    <div className="bg-brandPrimary h-full" style={{ width: `${val}%` }} />
+                                  </div>
+                                  <span className="text-slate-800 w-8 text-right">{val}%</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })
@@ -409,65 +377,149 @@ const AIRankingDashboard = () => {
         </div>
       </div>
 
-      {/* Battle Comparison Modal */}
-      {showBattleModal && (
+      {/* Floating Launch Comparison Button */}
+      {selectedForCompare.length === 2 && (
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40 bg-white border border-[#E5E7EB] rounded-full px-6 py-3 shadow-xl flex items-center space-x-4 hover:shadow-2xl transition-all">
+          <span className="text-xs font-bold text-slate-700">2 Candidates Selected</span>
+          <div
+            onClick={() => setShowCompareModal(true)}
+            className="btn-primary text-xs font-bold py-1.5 px-4 rounded-full cursor-pointer flex items-center space-x-1 shadow-sm"
+          >
+            <span>Compare Profiles</span>
+          </div>
+        </div>
+      )}
+
+      {/* Comparison Modal */}
+      {showCompareModal && comp1 && comp2 && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="w-full max-w-3xl bg-darkCard border border-darkBorder rounded-2xl p-6 relative my-8">
-            <button
-              onClick={() => setShowBattleModal(false)}
-              className="absolute top-4 right-4 text-slate-500 hover:text-slate-900 transition-colors"
+          <div className="w-full max-w-4xl bg-white border border-[#E5E7EB] rounded-2xl p-6 relative my-8 shadow-2xl max-h-[90vh] overflow-y-auto">
+            {/* Close button */}
+            <div
+              onClick={() => setShowCompareModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 cursor-pointer p-1.5"
             >
               <X size={18} />
-            </button>
-
-            <div className="text-center mb-6">
-              <div className="w-10 h-10 rounded-lg bg-indigo-600 flex items-center justify-center mx-auto mb-3">
-                <Sword size={20} className="text-white" />
-              </div>
-              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Candidate Comparison Battle</h3>
-              <p className="text-[10px] text-textMuted mt-1">Side by side DNA, potential, and AI recommendation scorecard</p>
             </div>
 
-            {battleLoading ? (
-              <div className="text-center py-12 text-slate-500 text-xs">AI battle evaluator is comparing profiles...</div>
-            ) : (
-              <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Candidate 1 */}
-                  <div className="bg-slate-900/40 border border-darkBorder rounded-xl p-4 space-y-3">
-                    <h4 className="text-xs font-bold text-gray-200">
-                      {isBlindMode ? 'Anonymized Candidate A' : compareList[0]?.candidate?.name}
-                    </h4>
-                    <p className="text-[10px] text-indigo-400">{compareList[0]?.candidate?.profile?.title}</p>
-                    <div className="grid grid-cols-2 gap-2 text-[10px] text-textMuted pt-2">
-                      <div>Tech Match: <span className="text-white font-bold">{compareList[0]?.fitDetails?.technicalFit}%</span></div>
-                      <div>Exp Match: <span className="text-white font-bold">{compareList[0]?.fitDetails?.experienceFit}%</span></div>
-                    </div>
-                  </div>
+            <div className="text-center mb-6">
+              <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-800 font-jakarta">Candidate Comparison Portal</h3>
+              <p className="text-[10px] text-textMuted mt-1 font-semibold">Side by side evaluation of technical scores, project profiles, and behavioral metrics</p>
+            </div>
 
-                  {/* Candidate 2 */}
-                  <div className="bg-slate-900/40 border border-darkBorder rounded-xl p-4 space-y-3">
-                    <h4 className="text-xs font-bold text-gray-200">
-                      {isBlindMode ? 'Anonymized Candidate B' : compareList[1]?.candidate?.name}
+            {/* Candidates Side by Side cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b border-[#E5E7EB]/50">
+              {/* Candidate 1 */}
+              <div className="bg-slate-50 border border-[#E5E7EB] rounded-xl p-5 space-y-4">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="text-sm font-extrabold text-slate-900">
+                      {blindMode ? 'Candidate A' : comp1.candidate?.name}
                     </h4>
-                    <p className="text-[10px] text-indigo-400">{compareList[1]?.candidate?.profile?.title}</p>
-                    <div className="grid grid-cols-2 gap-2 text-[10px] text-textMuted pt-2">
-                      <div>Tech Match: <span className="text-white font-bold">{compareList[1]?.fitDetails?.technicalFit}%</span></div>
-                      <div>Exp Match: <span className="text-white font-bold">{compareList[1]?.fitDetails?.experienceFit}%</span></div>
-                    </div>
+                    <p className="text-[10px] text-slate-500 font-bold mt-0.5">
+                      {comp1.candidate?.profile?.title || 'Engineer'}
+                    </p>
                   </div>
+                  <span className="text-lg font-extrabold text-brandPrimary">{comp1.matchScore}%</span>
                 </div>
 
-                {/* Declared Winner Display */}
-                {comparisonResult && (
-                  <div className="bg-emerald-950/20 border border-emerald-500/20 rounded-xl p-4 space-y-2">
-                    <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center space-x-1.5">
-                      <Zap size={14} />
-                      <span>Winner Recommendation: {isBlindMode ? 'Anonymized Recommendation' : comparisonResult.winner?.candidate?.name}</span>
-                    </h4>
-                    <p className="text-xs text-textMuted leading-relaxed">{comparisonResult.reasoning}</p>
+                {/* Score breakdown bars */}
+                <div className="space-y-2 border-t border-[#E5E7EB] pt-3">
+                  <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Weight alignment</span>
+                  {[
+                    { key: 'technicalFit', label: 'Technical Fit' },
+                    { key: 'experienceFit', label: 'Experience Match' },
+                    { key: 'projectFit', label: 'Project Portfolio' },
+                    { key: 'growthFit', label: 'Growth Potential' },
+                    { key: 'behavioralFit', label: 'Behavioral Signals' }
+                  ].map(fit => (
+                    <div key={fit.key} className="flex items-center justify-between text-[10px] font-semibold text-slate-700">
+                      <span>{fit.label}</span>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-16 bg-slate-200 rounded-full h-1 overflow-hidden">
+                          <div className="bg-brandPrimary h-full" style={{ width: `${comp1.fitDetails?.[fit.key] || 0}%` }} />
+                        </div>
+                        <span className="w-8 text-right font-extrabold">{comp1.fitDetails?.[fit.key] || 0}%</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* DNA Metrics */}
+                <div className="space-y-2 border-t border-[#E5E7EB] pt-3">
+                  <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">🧬 Core DNA Metrics</span>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-[10px] font-semibold text-slate-700">
+                    <div>Problem Solving: <span className="text-slate-900 font-extrabold">{comp1.candidate?.score?.dna?.problemSolving || 50}%</span></div>
+                    <div>Tech Skills: <span className="text-slate-900 font-extrabold">{comp1.candidate?.score?.dna?.technicalDepth || 50}%</span></div>
+                    <div>Communication: <span className="text-slate-900 font-extrabold">{comp1.candidate?.score?.dna?.communication || 50}%</span></div>
+                    <div>Leadership: <span className="text-slate-900 font-extrabold">{comp1.candidate?.score?.dna?.leadership || 50}%</span></div>
+                    <div>Adaptability: <span className="text-slate-900 font-extrabold">{comp1.candidate?.score?.dna?.adaptability || 50}%</span></div>
+                    <div>Dependability: <span className="text-slate-900 font-extrabold">{comp1.candidate?.score?.dna?.reliability || 50}%</span></div>
                   </div>
-                )}
+                </div>
+              </div>
+
+              {/* Candidate 2 */}
+              <div className="bg-slate-50 border border-[#E5E7EB] rounded-xl p-5 space-y-4">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="text-sm font-extrabold text-slate-900">
+                      {blindMode ? 'Candidate B' : comp2.candidate?.name}
+                    </h4>
+                    <p className="text-[10px] text-slate-500 font-bold mt-0.5">
+                      {comp2.candidate?.profile?.title || 'Engineer'}
+                    </p>
+                  </div>
+                  <span className="text-lg font-extrabold text-brandPrimary">{comp2.matchScore}%</span>
+                </div>
+
+                {/* Score breakdown bars */}
+                <div className="space-y-2 border-t border-[#E5E7EB] pt-3">
+                  <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Weight alignment</span>
+                  {[
+                    { key: 'technicalFit', label: 'Technical Fit' },
+                    { key: 'experienceFit', label: 'Experience Match' },
+                    { key: 'projectFit', label: 'Project Portfolio' },
+                    { key: 'growthFit', label: 'Growth Potential' },
+                    { key: 'behavioralFit', label: 'Behavioral Signals' }
+                  ].map(fit => (
+                    <div key={fit.key} className="flex items-center justify-between text-[10px] font-semibold text-slate-700">
+                      <span>{fit.label}</span>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-16 bg-slate-200 rounded-full h-1 overflow-hidden">
+                          <div className="bg-brandPrimary h-full" style={{ width: `${comp2.fitDetails?.[fit.key] || 0}%` }} />
+                        </div>
+                        <span className="w-8 text-right font-extrabold">{comp2.fitDetails?.[fit.key] || 0}%</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* DNA Metrics */}
+                <div className="space-y-2 border-t border-[#E5E7EB] pt-3">
+                  <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">🧬 Core DNA Metrics</span>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-[10px] font-semibold text-slate-700">
+                    <div>Problem Solving: <span className="text-slate-900 font-extrabold">{comp2.candidate?.score?.dna?.problemSolving || 50}%</span></div>
+                    <div>Tech Skills: <span className="text-slate-900 font-extrabold">{comp2.candidate?.score?.dna?.technicalDepth || 50}%</span></div>
+                    <div>Communication: <span className="text-slate-900 font-extrabold">{comp2.candidate?.score?.dna?.communication || 50}%</span></div>
+                    <div>Leadership: <span className="text-slate-900 font-extrabold">{comp2.candidate?.score?.dna?.leadership || 50}%</span></div>
+                    <div>Adaptability: <span className="text-slate-900 font-extrabold">{comp2.candidate?.score?.dna?.adaptability || 50}%</span></div>
+                    <div>Dependability: <span className="text-slate-900 font-extrabold">{comp2.candidate?.score?.dna?.reliability || 50}%</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* AI Recommendation Banner */}
+            {winner && loser && (
+              <div className="mt-6 bg-indigo-50/50 border border-brandPrimary/10 rounded-2xl p-5 space-y-2.5">
+                <h4 className="text-xs font-bold text-brandPrimary uppercase tracking-wider flex items-center space-x-2">
+                  <Zap size={15} />
+                  <span>Winner Recommendation: {blindMode ? (winner === comp1 ? 'Candidate A' : 'Candidate B') : winner.candidate?.name}</span>
+                </h4>
+                <p className="text-xs text-slate-600 leading-relaxed font-semibold">
+                  Based on the dynamic JD weights, {blindMode ? (winner === comp1 ? 'Candidate A' : 'Candidate B') : winner.candidate?.name} is recommended for this role with a match fit score of {winner.matchScore}%. They demonstrate higher alignment with technical fit metrics ({winner.fitDetails?.technicalFit}%) and overall suitability calibration.
+                </p>
               </div>
             )}
           </div>

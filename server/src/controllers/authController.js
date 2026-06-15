@@ -261,22 +261,31 @@ exports.googleLogin = async (req, res, next) => {
     }
 
     const { email, name } = decoded;
+    const { role } = req.body;
 
     // Check if user exists
     let user = await User.findOne({ email });
 
     if (!user) {
+      const targetRole = role || 'candidate';
       // Create user on the fly if they don't exist
       user = await User.create({
         name,
         email,
         password: crypto.randomBytes(16).toString('hex'),
-        role: 'candidate', // Default to candidate
+        role: targetRole,
         isVerified: true
       });
 
-      // Create profile for candidate
-      await CandidateProfile.create({ user: user._id });
+      // Create profile based on role
+      if (targetRole === 'candidate') {
+        await CandidateProfile.create({ user: user._id });
+      } else if (targetRole === 'recruiter') {
+        await RecruiterProfile.create({
+          user: user._id,
+          companyName: 'My Startup'
+        });
+      }
     }
 
     // Generate tokens
