@@ -12,6 +12,7 @@ const Assessment = require('../models/Assessment');
 const Submission = require('../models/Submission');
 const CandidateScore = require('../models/CandidateScore');
 const AIRanking = require('../models/AIRanking');
+const Application = require('../models/Application');
 
 const seedData = async (shouldCloseConnection = false) => {
   try {
@@ -20,6 +21,7 @@ const seedData = async (shouldCloseConnection = false) => {
     await CandidateProfile.deleteMany();
     await RecruiterProfile.deleteMany();
     await Job.deleteMany();
+    await Application.deleteMany();
     await Question.deleteMany();
     await CodingProblem.deleteMany();
     await Assessment.deleteMany();
@@ -40,8 +42,8 @@ const seedData = async (shouldCloseConnection = false) => {
     });
 
     const recruiter = await User.create({
-      name: 'Sarah Connor',
-      email: 'sarah@skynet.com',
+      name: 'Jashvi Thakkar (Recruiter)',
+      email: 'jashvithak00@gmail.com',
       password: defaultPassword,
       role: 'recruiter',
       isVerified: true
@@ -49,14 +51,16 @@ const seedData = async (shouldCloseConnection = false) => {
 
     await RecruiterProfile.create({
       user: recruiter._id,
-      companyName: 'Skynet Tech',
-      companyWebsite: 'https://skynet.com',
+      companyName: 'TalentLens AI Corp',
+      companyWebsite: 'https://talentlens.ai',
       companySize: '51-200',
-      companyBio: 'Building the future of automation, neural networks, and AI recruiting platforms.',
-      title: 'Head of Talent Acquisition'
+      companyBio: 'Building the next generation of AI-powered talent intelligence and recruitment automation platforms.',
+      title: 'Lead Recruiter'
     });
 
-    // 2. Create Jobs
+    // 2. Create Jobs (with 6-month expiry)
+    const expiryDate = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000); // 6 months from now
+
     const job1 = await Job.create({
       recruiter: recruiter._id,
       title: 'Senior MERN Developer',
@@ -64,23 +68,67 @@ const seedData = async (shouldCloseConnection = false) => {
       requiredSkills: ['React', 'Node.js', 'MongoDB', 'Express.js', 'JavaScript'],
       preferredSkills: ['TypeScript', 'AWS', 'Redux Toolkit'],
       experience: 4,
-      salaryRange: { min: 1200000, max: 2000000 }, // 12-20 LPA
+      salaryRange: { min: 1200000, max: 2000000 },
       location: 'Remote, India',
       employmentType: 'full-time',
-      status: 'active'
+      status: 'active',
+      expiresAt: expiryDate
     });
 
     const job2 = await Job.create({
       recruiter: recruiter._id,
+      title: 'AI / ML Engineer',
+      description: 'Looking for an AI/ML Engineer to deploy generative models and integrate agent frameworks. Experience with PyTorch, TensorFlow, and REST APIs is required.',
+      requiredSkills: ['Python', 'TensorFlow', 'PyTorch', 'REST APIs', 'Algorithms'],
+      preferredSkills: ['FastAPI', 'Docker', 'Machine Learning'],
+      experience: 2,
+      salaryRange: { min: 900000, max: 1500000 },
+      location: 'Bengaluru, Karnataka',
+      employmentType: 'full-time',
+      status: 'active',
+      expiresAt: expiryDate
+    });
+
+    const job3 = await Job.create({
+      recruiter: recruiter._id,
       title: 'Frontend Specialist (React)',
       description: 'Join our design systems team to build responsive component libraries in React and Tailwind CSS.',
       requiredSkills: ['React', 'JavaScript', 'HTML5', 'CSS3', 'Tailwind CSS'],
-      preferredSkills: ['TypeScript', 'Figma'],
+      preferredSkills: ['TypeScript', 'Figma', 'Next.js'],
       experience: 2,
-      salaryRange: { min: 600000, max: 1000000 }, // 6-10 LPA
-      location: 'Bengaluru, Karnataka',
+      salaryRange: { min: 600000, max: 1000000 },
+      location: 'Mumbai, Maharashtra',
       employmentType: 'full-time',
-      status: 'active'
+      status: 'active',
+      expiresAt: expiryDate
+    });
+
+    const job4 = await Job.create({
+      recruiter: recruiter._id,
+      title: 'DevOps & Cloud Specialist',
+      description: 'Responsible for building robust, scalable cloud architectures, container orchestration, and automating deployment pipelines using Docker, Kubernetes, and AWS.',
+      requiredSkills: ['AWS', 'Docker', 'Kubernetes', 'CI/CD'],
+      preferredSkills: ['Terraform', 'Linux', 'Python'],
+      experience: 4,
+      salaryRange: { min: 1500000, max: 2500000 },
+      location: 'Hyderabad, Telangana',
+      employmentType: 'full-time',
+      status: 'active',
+      expiresAt: expiryDate
+    });
+
+    const job5 = await Job.create({
+      recruiter: recruiter._id,
+      title: 'Backend Developer (Node.js & Go)',
+      description: 'Develop low-latency REST and gRPC API microservices, database design, and caching systems.',
+      requiredSkills: ['Node.js', 'Express.js', 'MongoDB', 'SQL', 'Go'],
+      preferredSkills: ['Redis', 'RESTful APIs', 'Docker'],
+      experience: 3,
+      salaryRange: { min: 800000, max: 1300000 },
+      location: 'Pune, Maharashtra',
+      employmentType: 'full-time',
+      status: 'active',
+      expiresAt: expiryDate
     });
 
     // 3. Create Questions & Problems
@@ -422,42 +470,79 @@ const seedData = async (shouldCloseConnection = false) => {
         potential: cData.potential
       });
 
-      // Create AI ranking records for both jobs
-      await AIRanking.create({
-        job: job1._id,
-        candidate: u._id,
-        matchScore: cData.matchScore,
-        fitDetails: {
-          technicalFit: cData.dna.technicalDepth,
-          experienceFit: cData.matchScore - 10 > 50 ? cData.matchScore - 10 : 60,
-          projectFit: cData.dna.problemSolving,
-          growthFit: cData.potential.futureGrowthPotential,
-          behavioralFit: cData.behavioral.reliabilityScore
-        },
-        reasons: cData.reasons,
-        missing: cData.missing,
-        risks: cData.risks,
-        whyNotHigher: {
-          reasons: ['Could demonstrate broader system containerization capabilities.'],
-          improvementAreas: ['Obtain intermediate system certifications.']
-        }
-      });
+      // Determine which jobs this candidate applies to
+      const targetJobs = [];
+      const index = candidatesData.indexOf(cData);
 
-      await AIRanking.create({
-        job: job2._id,
-        candidate: u._id,
-        matchScore: cData.matchScore - 5 > 50 ? cData.matchScore - 5 : 55,
-        fitDetails: {
-          technicalFit: cData.dna.technicalDepth - 5 > 50 ? cData.dna.technicalDepth - 5 : 50,
-          experienceFit: cData.matchScore - 15 > 50 ? cData.matchScore - 15 : 50,
-          projectFit: cData.dna.problemSolving,
-          growthFit: cData.potential.futureGrowthPotential,
-          behavioralFit: cData.behavioral.reliabilityScore
-        },
-        reasons: cData.reasons,
-        missing: cData.missing,
-        risks: cData.risks
-      });
+      if (index === 0) { // Rohan Sharma - MERN
+        targetJobs.push({ job: job1, status: 'Selected', matchScore: 94 });
+        targetJobs.push({ job: job5, status: 'Shortlisted', matchScore: 88 });
+      } else if (index === 1) { // Anjali Rao - Frontend React
+        targetJobs.push({ job: job3, status: 'Interview Scheduled', matchScore: 92 });
+        targetJobs.push({ job: job1, status: 'Under Review', matchScore: 78 });
+      } else if (index === 2) { // Aarav Mehta - Python ML
+        targetJobs.push({ job: job2, status: 'Selected', matchScore: 95 });
+      } else if (index === 3) { // Priya Nair - QA
+        targetJobs.push({ job: job3, status: 'Rejected', matchScore: 52 });
+        targetJobs.push({ job: job4, status: 'Applied', matchScore: 60 });
+      } else if (index === 4) { // Vikram Malhotra - DevOps
+        targetJobs.push({ job: job4, status: 'Shortlisted', matchScore: 94 });
+      } else if (index === 5) { // Siddharth Mehta - Backend
+        targetJobs.push({ job: job5, status: 'Interview Scheduled', matchScore: 90 });
+        targetJobs.push({ job: job4, status: 'Under Review', matchScore: 76 });
+      } else if (index === 6) { // Kavya Iyer - UI/UX
+        targetJobs.push({ job: job3, status: 'Shortlisted', matchScore: 86 });
+      } else if (index === 7) { // Kabir Patel - Jr Frontend
+        targetJobs.push({ job: job3, status: 'Under Review', matchScore: 72 });
+        targetJobs.push({ job: job1, status: 'Applied', matchScore: 64 });
+      } else if (index === 8) { // Aisha Khan - Security Node
+        targetJobs.push({ job: job5, status: 'Shortlisted', matchScore: 85 });
+        targetJobs.push({ job: job1, status: 'Under Review', matchScore: 80 });
+      } else if (index === 9) { // Aditya Verma - Systems
+        targetJobs.push({ job: job5, status: 'Applied', matchScore: 70 });
+        targetJobs.push({ job: job2, status: 'Under Review', matchScore: 68 });
+      } else if (index === 10) { // Sneha Reddy - Jr Full Stack
+        targetJobs.push({ job: job1, status: 'Applied', matchScore: 74 });
+        targetJobs.push({ job: job3, status: 'Applied', matchScore: 72 });
+        targetJobs.push({ job: job5, status: 'Applied', matchScore: 70 });
+      } else if (index === 11) { // Arjun Das - Mobile
+        targetJobs.push({ job: job3, status: 'Under Review', matchScore: 78 });
+      }
+
+      for (const target of targetJobs) {
+        // Create Application record
+        await Application.create({
+          job: target.job._id,
+          candidate: u._id,
+          status: target.status,
+          coverLetter: `Hello, I am excited to apply for the ${target.job.title} role. My experience matches your requirements well.`,
+          timeline: [
+            { status: 'Applied', notes: 'Application submitted successfully.', updatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) },
+            { status: target.status, notes: `Status updated to ${target.status} during review.`, updatedAt: new Date() }
+          ]
+        });
+
+        // Create AI ranking records
+        await AIRanking.create({
+          job: target.job._id,
+          candidate: u._id,
+          matchScore: target.matchScore,
+          fitDetails: {
+            technicalFit: cData.dna.technicalDepth,
+            experienceFit: target.matchScore - 10 > 50 ? target.matchScore - 10 : 60,
+            projectFit: cData.dna.problemSolving,
+            growthFit: cData.potential.futureGrowthPotential,
+            behavioralFit: cData.behavioral.reliabilityScore
+          },
+          reasons: cData.reasons,
+          missing: cData.missing,
+          risks: cData.risks,
+          whyNotHigher: {
+            reasons: ['Could demonstrate broader system containerization capabilities.'],
+            improvementAreas: ['Obtain intermediate system certifications.']
+          }
+        });
+      }
     }
 
     console.log('Database seeded with 12 candidates successfully!');

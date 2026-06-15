@@ -47,6 +47,10 @@ const JobSchema = new mongoose.Schema({
     enum: ['active', 'archived', 'closed'],
     default: 'active'
   },
+  expiresAt: {
+    type: Date,
+    default: () => new Date(Date.now() + 180 * 24 * 60 * 60 * 1000) // 180 days (6 months) from now
+  },
   // Weights configuration for JD Simulator
   weights: {
     technicalFit: { type: Number, default: 0.35 },

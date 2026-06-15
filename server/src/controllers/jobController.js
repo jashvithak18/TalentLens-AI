@@ -19,7 +19,13 @@ exports.createJob = async (req, res, next) => {
 // Get all jobs (with query filters)
 exports.getJobs = async (req, res, next) => {
   const { search, location, type, minSalary } = req.query;
-  const filter = { status: 'active' };
+  const filter = {
+    status: 'active',
+    $or: [
+      { expiresAt: { $exists: false } },
+      { expiresAt: { $gt: new Date() } }
+    ]
+  };
 
   if (search) {
     filter.$or = [

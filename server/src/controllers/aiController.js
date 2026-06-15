@@ -113,7 +113,13 @@ exports.recruiterCopilot = async (req, res, next) => {
     }
 
     // 2. Fetch Jobs
-    const jobs = await Job.find({ status: 'active' });
+    const jobs = await Job.find({
+      status: 'active',
+      $or: [
+        { expiresAt: { $exists: false } },
+        { expiresAt: { $gt: new Date() } }
+      ]
+    });
 
     // 3. Send context to Groq AI
     const reply = await aiRecruiterCopilotChat(messages, candidates, jobs);
