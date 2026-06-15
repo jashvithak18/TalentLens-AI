@@ -70,23 +70,29 @@ exports.updateProfile = async (req, res, next) => {
       details: 'Updated profile details and skills list'
     });
 
+    res.status(200).json({ success: true, profile });
+
     // Trigger AI DNA calculation in background if skills change
     if (skills !== undefined) {
-      const submissions = await Submission.find({ candidate: req.user.id });
-      const activities = await ActivityLog.find({ user: req.user.id });
-      const dnaData = await aiGenerateCandidateDNA(profile, submissions, activities);
-      await CandidateScore.findOneAndUpdate(
-        { candidate: req.user.id },
-        {
-          dna: dnaData.dna,
-          behavioral: dnaData.behavioral,
-          potential: dnaData.potential
-        },
-        { upsert: true, new: true }
-      );
+      (async () => {
+        try {
+          const submissions = await Submission.find({ candidate: req.user.id });
+          const activities = await ActivityLog.find({ user: req.user.id });
+          const dnaData = await aiGenerateCandidateDNA(profile, submissions, activities);
+          await CandidateScore.findOneAndUpdate(
+            { candidate: req.user.id },
+            {
+              dna: dnaData.dna,
+              behavioral: dnaData.behavioral,
+              potential: dnaData.potential
+            },
+            { upsert: true }
+          );
+        } catch (bgErr) {
+          console.error('Background AI DNA calculation error:', bgErr);
+        }
+      })();
     }
-
-    res.status(200).json({ success: true, profile });
   } catch (error) {
     next(error);
   }
@@ -280,12 +286,17 @@ exports.addProject = async (req, res, next) => {
     profile.projects.push(req.body);
     await profile.save();
     
-    // Recalculate inferred skills when adding a project
-    const inferred = await aiDetectHiddenSkills(profile);
-    profile.inferredSkills = inferred;
-    await profile.save();
-
     res.status(200).json({ success: true, profile });
+
+    // Recalculate inferred skills in background when adding a project
+    (async () => {
+      try {
+        const inferred = await aiDetectHiddenSkills(profile);
+        await CandidateProfile.updateOne({ _id: profile._id }, { inferredSkills: inferred });
+      } catch (bgErr) {
+        console.error('Background inferred skills calculation error:', bgErr);
+      }
+    })();
   } catch (error) {
     next(error);
   }
@@ -466,14 +477,19 @@ exports.deleteSubSection = async (req, res, next) => {
     profile[type].pull({ _id: id });
     await profile.save();
 
-    // If type is projects or experience, recalculate inferred skills
-    if (type === 'projects' || type === 'experience') {
-      const inferred = await aiDetectHiddenSkills(profile);
-      profile.inferredSkills = inferred;
-      await profile.save();
-    }
-
     res.status(200).json({ success: true, profile });
+
+    // If type is projects or experience, recalculate inferred skills in background
+    if (type === 'projects' || type === 'experience') {
+      (async () => {
+        try {
+          const inferred = await aiDetectHiddenSkills(profile);
+          await CandidateProfile.updateOne({ _id: profile._id }, { inferredSkills: inferred });
+        } catch (bgErr) {
+          console.error('Background inferred skills calculation error:', bgErr);
+        }
+      })();
+    }
   } catch (error) {
     next(error);
   }
@@ -517,13 +533,18 @@ exports.updateSubSection = async (req, res, next) => {
 
     await profile.save();
 
-    if (type === 'projects' || type === 'experience') {
-      const inferred = await aiDetectHiddenSkills(profile);
-      profile.inferredSkills = inferred;
-      await profile.save();
-    }
-
     res.status(200).json({ success: true, profile });
+
+    if (type === 'projects' || type === 'experience') {
+      (async () => {
+        try {
+          const inferred = await aiDetectHiddenSkills(profile);
+          await CandidateProfile.updateOne({ _id: profile._id }, { inferredSkills: inferred });
+        } catch (bgErr) {
+          console.error('Background inferred skills calculation error:', bgErr);
+        }
+      })();
+    }
   } catch (error) {
     next(error);
   }

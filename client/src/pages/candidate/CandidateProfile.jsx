@@ -140,6 +140,9 @@ const CandidateProfile = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['candidateProfile'] });
       showSuccess('General info updated successfully!');
+    },
+    onError: (err) => {
+      setErrorMsg(err.response?.data?.error || 'Failed to update general info.');
     }
   });
 
@@ -153,6 +156,9 @@ const CandidateProfile = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['candidateProfile'] });
       showSuccess('Entry added successfully!');
+    },
+    onError: (err) => {
+      setErrorMsg(err.response?.data?.error || 'Failed to add entry.');
     }
   });
 
