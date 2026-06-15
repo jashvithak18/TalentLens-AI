@@ -7,6 +7,7 @@ const ActivityLog = require('../models/ActivityLog');
 const { uploadToCloudinary } = require('../middleware/upload');
 const { aiParseResume, aiDetectHiddenSkills, aiGenerateCandidateDNA } = require('../utils/aiHelpers');
 const fs = require('fs');
+const pdfParse = require('pdf-parse');
 
 // Get candidate profile
 exports.getProfile = async (req, res, next) => {
@@ -101,12 +102,17 @@ exports.uploadResume = async (req, res, next) => {
     const uploadResult = await uploadToCloudinary(req.file.path, 'resumes');
 
     // 2. Perform AI Parsing (Read the local file text or simulated parsing)
-    // For local parsing, we'll read text if pdf, or mock parser.
     let resumeText = `Name: ${req.user.name}\nEmail: ${req.user.email}\n`;
     try {
-      // Simple text readout if we want, otherwise use the path
-      resumeText += fs.readFileSync(req.file.path, 'utf8');
+      if (req.file.mimetype === 'application/pdf' || req.file.path.endsWith('.pdf')) {
+        const dataBuffer = fs.readFileSync(req.file.path);
+        const pdfData = await pdfParse(dataBuffer);
+        resumeText += pdfData.text;
+      } else {
+        resumeText += fs.readFileSync(req.file.path, 'utf8');
+      }
     } catch (readErr) {
+      console.error('Error reading/parsing resume file:', readErr);
       resumeText += "Simulated text readout from resume file.";
     }
 
@@ -128,24 +134,73 @@ exports.uploadResume = async (req, res, next) => {
     }
     profile.resumeParsingConfidence = parsedData.confidence || 85;
 
-    // Overwrite experience, education, projects, certifications automatically
+    // Overwrite experience, education, projects, certifications automatically with date/field validation
     if (parsedData.experience && parsedData.experience.length > 0) {
-      profile.experience = parsedData.experience;
+      profile.experience = parsedData.experience.map(exp => {
+        let sDate = exp.startDate ? new Date(exp.startDate) : new Date();
+        if (isNaN(sDate.getTime())) {
+          sDate = new Date();
+        }
+        let eDate = exp.endDate ? new Date(exp.endDate) : null;
+        if (eDate && isNaN(eDate.getTime())) {
+          eDate = null;
+        }
+        return {
+          company: exp.company || 'Unknown Company',
+          role: exp.role || 'Software Engineer',
+          startDate: sDate,
+          endDate: exp.current ? null : eDate,
+          current: !!exp.current,
+          description: exp.description || ''
+        };
+      });
     }
     if (parsedData.education && parsedData.education.length > 0) {
-      profile.education = parsedData.education;
+      profile.education = parsedData.education.map(edu => {
+        return {
+          institution: edu.institution || 'Unknown Institution',
+          degree: edu.degree || 'Bachelor Degree',
+          fieldOfStudy: edu.fieldOfStudy || '',
+          startDate: edu.startDate ? new Date(edu.startDate) : undefined,
+          endDate: edu.endDate ? new Date(edu.endDate) : undefined,
+          grade: edu.grade || ''
+        };
+      });
     }
     if (parsedData.projects && parsedData.projects.length > 0) {
-      profile.projects = parsedData.projects;
+      profile.projects = parsedData.projects.map(proj => {
+        return {
+          title: proj.title || 'Project',
+          description: proj.description || '',
+          technologies: proj.technologies || []
+        };
+      });
     }
     if (parsedData.certifications && parsedData.certifications.length > 0) {
-      profile.certifications = parsedData.certifications;
+      profile.certifications = parsedData.certifications.map(cert => {
+        let iDate = cert.issueDate ? new Date(cert.issueDate) : undefined;
+        if (iDate && isNaN(iDate.getTime())) {
+          iDate = undefined;
+        }
+        return {
+          name: cert.name || 'Certification',
+          issuer: cert.issuer || '',
+          issueDate: iDate
+        };
+      });
     }
 
     // Populate other profile fields from resume
     if (parsedData.title) profile.title = parsedData.title;
     if (parsedData.location) profile.location = parsedData.location;
     if (parsedData.bio) profile.bio = parsedData.bio;
+
+    // Save social links
+    if (!profile.socialLinks) {
+      profile.socialLinks = {};
+    }
+    if (parsedData.linkedin) profile.socialLinks.linkedin = parsedData.linkedin;
+    if (parsedData.github) profile.socialLinks.github = parsedData.github;
 
     await profile.save();
 

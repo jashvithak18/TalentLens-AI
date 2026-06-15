@@ -80,6 +80,8 @@ exports.aiParseResume = async (resumeText) => {
     certifications: [
       { name: "AWS Certified Developer", issuer: "Amazon Web Services", issueDate: "2024-02-15" }
     ],
+    linkedin: "https://linkedin.com/in/rohansharma",
+    github: "https://github.com/rohansharma",
     confidence: 92
   };
 
@@ -101,6 +103,8 @@ exports.aiParseResume = async (resumeText) => {
       "education": [{"institution": "string", "degree": "string", "fieldOfStudy": "string", "grade": "string"}],
       "projects": [{"title": "string", "description": "string", "technologies": ["string"]}],
       "certifications": [{"name": "string", "issuer": "string", "issueDate": "YYYY-MM-DD"}],
+      "linkedin": "string or null",
+      "github": "string or null",
       "confidence": number (between 50 and 100)
     }
 
