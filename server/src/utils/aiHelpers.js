@@ -244,34 +244,78 @@ exports.aiDetectHiddenSkills = async (candidateDetails) => {
   }
 };
 
-// 4. Candidate DNA + Potential Profile + Behavioral Analytics
-exports.aiGenerateCandidateDNA = async (candidateDetails, submissionHistory = [], activityHistory = []) => {
-  const fallbackDNA = {
+const generateDeterministicScores = (profile) => {
+  const skillsCount = profile?.skills?.length || 0;
+  const expCount = profile?.experience?.length || 0;
+  const projCount = profile?.projects?.length || 0;
+  const eduCount = profile?.education?.length || 0;
+  const certCount = profile?.certifications?.length || 0;
+  const bioLength = profile?.bio?.length || 0;
+
+  // Compute a base hash from user id or title to add candidate-specific variation
+  let nameHash = 0;
+  const nameString = profile?.title || profile?.location || 'default';
+  for (let i = 0; i < nameString.length; i++) {
+    nameHash += nameString.charCodeAt(i);
+  }
+  const variance = (nameHash % 15) - 7; // range: -7 to +7
+
+  // Helper to clamp scores between 55 and 98
+  const clampScore = (val) => Math.max(55, Math.min(98, Math.round(val)));
+
+  // Calculate scores dynamically based on resume properties
+  const problemSolving = clampScore(70 + projCount * 6 + variance);
+  const technicalDepth = clampScore(65 + skillsCount * 2 + projCount * 3 + variance);
+  const communication = clampScore(60 + (bioLength > 50 ? 12 : 5) + expCount * 3 + variance);
+  const leadership = clampScore(50 + expCount * 5 + variance);
+  const adaptability = clampScore(70 + skillsCount * 1.5 + variance);
+  const reliability = clampScore(75 + expCount * 4 + certCount * 3 + variance);
+  const learningVelocity = clampScore(75 + skillsCount * 1.5 + projCount * 2 + variance);
+  const consistency = clampScore(65 + expCount * 4 + projCount * 3 + variance);
+
+  // Behavioral insights scores
+  const learningScore = clampScore(75 + skillsCount * 1.8 + variance);
+  const consistencyScore = clampScore(70 + expCount * 5 + variance);
+  const reliabilityScore = clampScore(80 + certCount * 4 + variance);
+  const growthScore = clampScore(72 + projCount * 5 + variance);
+  const adaptabilityScore = clampScore(68 + skillsCount * 1.5 + variance);
+
+  // Potential capability scores
+  const currentCapability = clampScore(60 + skillsCount * 1.5 + expCount * 3 + variance);
+  const futureGrowthPotential = clampScore(75 + learningVelocity * 0.2 + variance);
+  const careerAccelerationScore = clampScore(70 + projCount * 4 + variance);
+
+  return {
     dna: {
-      problemSolving: 85,
-      technicalDepth: 80,
-      communication: 75,
-      leadership: 65,
-      adaptability: 90,
-      reliability: 88,
-      learningVelocity: 95,
-      consistency: 90
+      problemSolving,
+      technicalDepth,
+      communication,
+      leadership,
+      adaptability,
+      reliability,
+      learningVelocity,
+      consistency
     },
     behavioral: {
-      learningScore: 92,
-      consistencyScore: 88,
-      reliabilityScore: 90,
-      growthScore: 95,
-      adaptabilityScore: 87
+      learningScore,
+      consistencyScore,
+      reliabilityScore,
+      growthScore,
+      adaptabilityScore
     },
     potential: {
-      currentCapability: 78,
-      futureGrowthPotential: 94,
-      careerAccelerationScore: 89,
-      learningVelocity: 96,
-      reasoning: "Excellent track record of project releases, high assessment scores, and rapid acquisition of new skills (TypeScript, AWS) in short durations."
+      currentCapability,
+      futureGrowthPotential,
+      careerAccelerationScore,
+      learningVelocity,
+      reasoning: `Determined from candidate profile metrics: ${skillsCount} skills, ${expCount} experiences, and ${projCount} projects analyzed.`
     }
   };
+};
+
+// 4. Candidate DNA + Potential Profile + Behavioral Analytics
+exports.aiGenerateCandidateDNA = async (candidateDetails, submissionHistory = [], activityHistory = []) => {
+  const fallbackDNA = generateDeterministicScores(candidateDetails);
 
   if (!process.env.GROQ_API_KEY) {
     return fallbackDNA;
